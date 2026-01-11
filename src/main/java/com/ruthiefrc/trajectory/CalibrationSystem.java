@@ -86,6 +86,7 @@ public class CalibrationSystem {
     /**
      * Perform incremental parameter update based on a single shot.
      * Uses online learning to adjust parameters without rebuilding model.
+     * Enhanced to calibrate spin-related parameters.
      */
     private void performIncrementalUpdate(ShotLog shot) {
         // Get recent performance to determine if adjustment is needed
@@ -119,6 +120,20 @@ public class CalibrationSystem {
                 newParams = newParams.withSpeedEfficiency(
                     currentParameters.speedEfficiency * speedAdjustment
                 );
+            }
+            
+            // Adjust spin efficiency based on spin rate and hit rate
+            if (shot.spinRate > 100.0) {
+                // High spin shots missing - might need spin efficiency adjustment
+                double avgSpinRecent = recentShots.stream()
+                    .mapToDouble(s -> s.spinRate).average().orElse(0.0);
+                if (avgSpinRecent > 100.0 && recentHits <= 2) {
+                    // Multiple high-spin misses - adjust spin efficiency
+                    double spinAdjustment = 1.0 - learningRate * 0.3;
+                    newParams = newParams.withSpinEfficiency(
+                        currentParameters.spinEfficiency * spinAdjustment
+                    );
+                }
             }
             
             // Only update if parameters changed meaningfully

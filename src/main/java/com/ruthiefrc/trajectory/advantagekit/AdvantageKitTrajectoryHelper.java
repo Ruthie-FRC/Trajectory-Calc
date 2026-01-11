@@ -71,7 +71,44 @@ public class AdvantageKitTrajectoryHelper {
     }
     
     /**
+     * Calculate trajectory with full spin vector control and automatically log to AdvantageKit.
+     * 
+     * @param robotX Robot X position (meters)
+     * @param robotY Robot Y position (meters)
+     * @param shooterHeight Height of shooter above ground (meters)
+     * @param launchSpeed Commanded launch speed (m/s)
+     * @param spinRate Spin rate (rad/s)
+     * @param spinAxisX Spin axis X component
+     * @param spinAxisY Spin axis Y component
+     * @param spinAxisZ Spin axis Z component
+     * @return Solution with launch angles
+     */
+    public InverseSolver.SolutionResult calculateAndLog(double robotX, double robotY, double shooterHeight,
+                                                         double launchSpeed, double spinRate,
+                                                         double spinAxisX, double spinAxisY, double spinAxisZ) {
+        // Time the calculation
+        long startTime = System.currentTimeMillis();
+        
+        // Calculate solution
+        InverseSolver.SolutionResult solution = controller.calculateShot(
+            robotX, robotY, shooterHeight, launchSpeed, spinRate, spinAxisX, spinAxisY, spinAxisZ
+        );
+        
+        long calcTime = System.currentTimeMillis() - startTime;
+        
+        // Log to AdvantageKit
+        if (loggingEnabled) {
+            logInputs(robotX, robotY, shooterHeight, launchSpeed, spinRate, spinAxisX, spinAxisY, spinAxisZ);
+            logOutputs(solution, calcTime);
+            logCalibration();
+        }
+        
+        return solution;
+    }
+    
+    /**
      * Calculate trajectory and automatically log all data to AdvantageKit.
+     * Uses default backspin (Y-axis).
      * 
      * @param robotX Robot X position (meters)
      * @param robotY Robot Y position (meters)
@@ -82,24 +119,8 @@ public class AdvantageKitTrajectoryHelper {
      */
     public InverseSolver.SolutionResult calculateAndLog(double robotX, double robotY, double shooterHeight,
                                                          double launchSpeed, double spinRate) {
-        // Time the calculation
-        long startTime = System.currentTimeMillis();
-        
-        // Calculate solution
-        InverseSolver.SolutionResult solution = controller.calculateShot(
-            robotX, robotY, shooterHeight, launchSpeed, spinRate
-        );
-        
-        long calcTime = System.currentTimeMillis() - startTime;
-        
-        // Log to AdvantageKit
-        if (loggingEnabled) {
-            logInputs(robotX, robotY, shooterHeight, launchSpeed, spinRate);
-            logOutputs(solution, calcTime);
-            logCalibration();
-        }
-        
-        return solution;
+        // Default: backspin around Y-axis
+        return calculateAndLog(robotX, robotY, shooterHeight, launchSpeed, spinRate, 0, 1, 0);
     }
     
     /**
@@ -197,13 +218,22 @@ public class AdvantageKitTrajectoryHelper {
     
     // Private logging methods
     
-    private void logInputs(double x, double y, double z, double speed, double spin) {
+    private void logInputs(double x, double y, double z, double speed, double spin,
+                          double spinAxisX, double spinAxisY, double spinAxisZ) {
         logToAdvantageKit(logPrefix + "Input/RobotX", x);
         logToAdvantageKit(logPrefix + "Input/RobotY", y);
         logToAdvantageKit(logPrefix + "Input/ShooterHeight", z);
         logToAdvantageKit(logPrefix + "Input/LaunchSpeed", speed);
         logToAdvantageKit(logPrefix + "Input/SpinRate", spin);
+        logToAdvantageKit(logPrefix + "Input/SpinAxisX", spinAxisX);
+        logToAdvantageKit(logPrefix + "Input/SpinAxisY", spinAxisY);
+        logToAdvantageKit(logPrefix + "Input/SpinAxisZ", spinAxisZ);
         logToAdvantageKit(logPrefix + "Input/Timestamp", System.currentTimeMillis());
+    }
+    
+    private void logInputs(double x, double y, double z, double speed, double spin) {
+        // Default backspin
+        logInputs(x, y, z, speed, spin, 0, 1, 0);
     }
     
     private void logOutputs(InverseSolver.SolutionResult solution, long calcTime) {
@@ -228,6 +258,7 @@ public class AdvantageKitTrajectoryHelper {
         logToAdvantageKit(logPrefix + "Calibration/MagnusCoeff", params.magnusCoefficient);
         logToAdvantageKit(logPrefix + "Calibration/SpeedEfficiency", params.speedEfficiency);
         logToAdvantageKit(logPrefix + "Calibration/SpinEfficiency", params.spinEfficiency);
+        logToAdvantageKit(logPrefix + "Calibration/SpinDecayRate", params.spinDecayRate);
         logToAdvantageKit(logPrefix + "Calibration/Restitution", params.restitutionCoefficient);
         logToAdvantageKit(logPrefix + "Calibration/Friction", params.frictionCoefficient);
     }

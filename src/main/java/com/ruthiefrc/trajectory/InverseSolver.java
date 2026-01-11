@@ -272,7 +272,8 @@ public class InverseSolver {
     
     /**
      * Calculate bounce-out risk score (0-1, higher is more risk).
-     * Based on vertical velocity and entry angle.
+     * Based on vertical velocity, entry angle, and spin alignment.
+     * Enhanced to consider spin effects on bounce probability.
      */
     private double calculateBounceOutRisk(TrajectorySimulator.TrajectoryResult result) {
         if (result.entryState == null) {
@@ -295,8 +296,32 @@ public class InverseSolver {
         }
         double angleRisk = (90.0 - entryAngle) / 90.0; // Shallow angles have high risk
         
-        // Combined risk (weighted average)
-        return vzRisk * 0.6 + angleRisk * 0.4;
+        // Spin alignment risk (NEW)
+        // Backspin that aligns with entry can reduce bounce-out
+        // Forward spin increases bounce-out risk
+        double spinRisk = 0.0;
+        double spinMagnitude = entry.spin.magnitude();
+        if (spinMagnitude > 10.0 && speed > 0.1) {
+            // Check if spin is aligned favorably with downward entry
+            // Backspin (positive Y-spin) with downward velocity is favorable
+            Vector3D velocityDir = entry.velocity.scale(1.0 / speed);
+            
+            // Spin effect on bounce: backspin reduces bounce if properly aligned
+            // Y-component of spin should be positive (backspin) for typical shots
+            double spinAlignment = entry.spin.y / spinMagnitude;
+            
+            if (spinAlignment > 0.5) {
+                // Good backspin - reduces bounce risk
+                spinRisk = -0.2 * (spinAlignment - 0.5); // Bonus (negative risk)
+            } else if (spinAlignment < -0.5) {
+                // Forward spin - increases bounce risk
+                spinRisk = 0.3 * Math.abs(spinAlignment);
+            }
+        }
+        
+        // Combined risk (weighted average with spin adjustment)
+        double baseRisk = vzRisk * 0.6 + angleRisk * 0.4;
+        return Math.max(0.0, Math.min(1.0, baseRisk + spinRisk)); // Clamp to [0,1]
     }
     
     /**
