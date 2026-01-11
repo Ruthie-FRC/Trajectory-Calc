@@ -1,8 +1,9 @@
-# Trajectory-Calc# Trajectory Calculator
+# Trajectory-Calc Trajectory Calculator
 
-Production-grade inverse ballistic solver for FRC robot shooters. Calculates optimal launch angles from any field position using full physics modeling including drag, Magnus effect, collisions, and spin decay.
+Production-grade inverse ballistic solver for FRC turret shooters. Calculates optimal launch angles from any field position using full physics modeling including drag, Magnus effect, collisions, and spin decay.
 
 ## Features
+not all implemented yet bc the robot hasnt been designed but either have been or will be
 
 - Full physics simulation: gravity, quadratic drag, Magnus effect, collision response, spin decay
 - Inverse solver: automatically computes launch angles from target position
@@ -13,8 +14,7 @@ Production-grade inverse ballistic solver for FRC robot shooters. Calculates opt
 - AdvantageKit logging integration for data-driven tuning
 - Incremental calibration from logged shot data
 - Pre-seeded optimization with position-based caching
-- Zero external dependencies beyond WPILib base
-- Real-time safe (deterministic, <100ms guarantees)
+- Real-time safe (deterministic, <100ms)
 - Runtime-configurable ball properties and physics parameters
 
 ## Installation
@@ -145,7 +145,7 @@ mvn package
 ## Requirements
 
 - Java 11+
-- WPILib 2024+ (for robot integration)
+- current advantagekit (for robot integration)
 - AdvantageKit (optional, for logging features)
 
 ## License
@@ -155,3 +155,5 @@ MIT License - Free for all FRC teams
 ## Credits
 
 Developed for FRC robotics applications with AdvantageKit teams in mind. Physics model based on classical mechanics and empirical FRC game piece data.
+
+Made by Ruthie-FRC, a sleep deprived freshman with an unhealthy physics obsession
