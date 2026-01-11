@@ -11,12 +11,12 @@ public class HubGeometry {
     private final double footprintSize;
     
     public HubGeometry() {
-        this(new Vector3D(PhysicsConstants.HUB_CENTER_X,
-                         PhysicsConstants.HUB_CENTER_Y,
-                         PhysicsConstants.HUB_CENTER_Z),
-             PhysicsConstants.HUB_OPENING_FLAT_TO_FLAT,
-             PhysicsConstants.HUB_OPENING_HEIGHT,
-             PhysicsConstants.HUB_FOOTPRINT_SIZE);
+        this(new Vector3D(PhysicsConstants.DEFAULT_HUB_CENTER_X,
+                         PhysicsConstants.DEFAULT_HUB_CENTER_Y,
+                         PhysicsConstants.DEFAULT_HUB_OPENING_HEIGHT),
+             PhysicsConstants.DEFAULT_HUB_OPENING_FLAT_TO_FLAT,
+             PhysicsConstants.DEFAULT_HUB_OPENING_HEIGHT,
+             PhysicsConstants.DEFAULT_HUB_FOOTPRINT_SIZE);
     }
     
     public HubGeometry(Vector3D center, double openingFlatToFlat, 
@@ -52,9 +52,25 @@ public class HubGeometry {
     
     /**
      * Check if a ball at given position would clear the opening with margin.
+     * Uses default ball radius.
      */
     public boolean hasEnoughClearance(Vector3D position, double marginMultiplier) {
-        double requiredMargin = PhysicsConstants.BALL_RADIUS * marginMultiplier;
+        double requiredMargin = PhysicsConstants.DEFAULT_BALL_RADIUS * marginMultiplier;
+        double effectiveRadius = (openingFlatToFlat / 2.0) - requiredMargin;
+        
+        double dx = position.x - center.x;
+        double dy = position.y - center.y;
+        double distFromCenter = Math.sqrt(dx * dx + dy * dy);
+        
+        return distFromCenter <= effectiveRadius;
+    }
+    
+    /**
+     * Check if a ball at given position would clear the opening with margin.
+     * Uses specified ball radius.
+     */
+    public boolean hasEnoughClearance(Vector3D position, double marginMultiplier, double ballRadius) {
+        double requiredMargin = ballRadius * marginMultiplier;
         double effectiveRadius = (openingFlatToFlat / 2.0) - requiredMargin;
         
         double dx = position.x - center.x;
@@ -96,7 +112,7 @@ public class HubGeometry {
         // Velocity score (prefer downward velocity)
         double vzScore = 0.0;
         if (state.velocity.z < 0) {
-            vzScore = Math.min(1.0, -state.velocity.z / PhysicsConstants.MAX_VERTICAL_VELOCITY);
+            vzScore = Math.min(1.0, -state.velocity.z / PhysicsConstants.DEFAULT_MAX_VERTICAL_VELOCITY);
         }
         
         // Entry angle score (prefer near-vertical)
@@ -105,7 +121,7 @@ public class HubGeometry {
         if (speed > 0.1) {
             entryAngle = Math.abs(Math.toDegrees(Math.asin(-state.velocity.z / speed)));
         }
-        double angleScore = Math.max(0, 1.0 - entryAngle / PhysicsConstants.MAX_ENTRY_ANGLE_DEG);
+        double angleScore = Math.max(0, 1.0 - entryAngle / PhysicsConstants.DEFAULT_MAX_ENTRY_ANGLE_DEG);
         
         // Combined score
         return marginScore * 0.5 + vzScore * 0.3 + angleScore * 0.2;

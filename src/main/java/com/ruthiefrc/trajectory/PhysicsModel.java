@@ -2,16 +2,23 @@ package com.ruthiefrc.trajectory;
 
 /**
  * Physics model for projectile motion including gravity, drag, and Magnus effect.
+ * Supports runtime-configurable projectile properties.
  */
 public class PhysicsModel {
     private final CalibrationParameters params;
+    private final ProjectileProperties projectile;
     
     public PhysicsModel() {
-        this(new CalibrationParameters());
+        this(new CalibrationParameters(), new ProjectileProperties());
     }
     
     public PhysicsModel(CalibrationParameters params) {
+        this(params, new ProjectileProperties());
+    }
+    
+    public PhysicsModel(CalibrationParameters params, ProjectileProperties projectile) {
         this.params = params;
+        this.projectile = projectile;
     }
     
     /**
@@ -32,7 +39,7 @@ public class PhysicsModel {
         if (speedSquared > 1e-6) {
             double speed = Math.sqrt(speedSquared);
             double dragMagnitude = 0.5 * PhysicsConstants.AIR_DENSITY * params.dragCoefficient
-                * PhysicsConstants.BALL_CROSS_SECTION * speedSquared / PhysicsConstants.BALL_MASS_KG;
+                * projectile.crossSectionalArea * speedSquared / projectile.massKg;
             Vector3D dragDirection = velocity.scale(-1.0 / speed);
             dragAccel = dragDirection.scale(dragMagnitude);
         } else {
@@ -42,7 +49,7 @@ public class PhysicsModel {
         // Magnus force: F_magnus = Cm * (ω × v)
         // This creates lift perpendicular to both velocity and spin
         Vector3D magnusForce = spin.cross(velocity).scale(params.magnusCoefficient);
-        Vector3D magnusAccel = magnusForce.scale(1.0 / PhysicsConstants.BALL_MASS_KG);
+        Vector3D magnusAccel = magnusForce.scale(1.0 / projectile.massKg);
         
         // Total acceleration
         Vector3D totalAccel = gravityAccel.add(dragAccel).add(magnusAccel);
@@ -80,5 +87,9 @@ public class PhysicsModel {
     
     public CalibrationParameters getParameters() {
         return params;
+    }
+    
+    public ProjectileProperties getProjectile() {
+        return projectile;
     }
 }
