@@ -1,0 +1,19 @@
+{
+  "fileName": "TrajectoryCalc.json",
+  "name": "TrajectoryCalc",
+  "version": "1.0.0",
+  "uuid": "8c5a1bdc-9876-4321-abcd-1234567890ab",
+  "mavenUrls": [
+    "https://maven.pkg.github.com/Ruthie-FRC/Trajectory-Calc"
+  ],
+  "jsonUrl": "https://raw.githubusercontent.com/Ruthie-FRC/Trajectory-Calc/main/TrajectoryCalc.json",
+  "javaDependencies": [
+    {
+      "groupId": "com.ruthiefrc",
+      "artifactId": "trajectory-calc",
+      "version": "1.0.0"
+    }
+  ],
+  "jniDependencies": [],
+  "cppDependencies": []
+}
