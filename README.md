@@ -156,4 +156,4 @@ MIT License - Free for all FRC teams
 
 Developed for FRC robotics applications with AdvantageKit teams in mind. Physics model based on classical mechanics and empirical FRC game piece data.
 
-Made by Ruthie-FRC, a sleep deprived freshman with an unhealthy physics obsession
+Made by Ruthie-FRC, member of FRC 6243 Energy NERDs, a sleep deprived freshman with an unhealthy physics obsession
