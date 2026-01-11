@@ -310,12 +310,12 @@ public class InverseSolver {
             // Y-component of spin should be positive (backspin) for typical shots
             double spinAlignment = entry.spin.y / spinMagnitude;
             
-            if (spinAlignment > 0.5) {
+            if (spinAlignment > PhysicsConstants.SPIN_ALIGNMENT_THRESHOLD) {
                 // Good backspin - reduces bounce risk
-                spinRisk = -0.2 * (spinAlignment - 0.5); // Bonus (negative risk)
-            } else if (spinAlignment < -0.5) {
+                spinRisk = -PhysicsConstants.SPIN_ALIGNMENT_BONUS * (spinAlignment - PhysicsConstants.SPIN_ALIGNMENT_THRESHOLD);
+            } else if (spinAlignment < -PhysicsConstants.SPIN_ALIGNMENT_THRESHOLD) {
                 // Forward spin - increases bounce risk
-                spinRisk = 0.3 * Math.abs(spinAlignment);
+                spinRisk = PhysicsConstants.SPIN_ALIGNMENT_PENALTY * Math.abs(spinAlignment);
             }
         }
         

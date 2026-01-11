@@ -47,7 +47,7 @@ public class PhysicsModel {
             dragAccel = new Vector3D(0, 0, 0);
         }
         
-        // Magnus force: F_magnus = Cm * (ω × v)
+        // Magnus force: F_magnus = Cm × |ω| × |v| × (ω × v)
         // Enhanced: Magnitude scales with both spin rate and velocity
         // This creates lift perpendicular to both velocity and spin
         double spinMagnitude = spin.magnitude();
@@ -56,7 +56,7 @@ public class PhysicsModel {
         
         if (spinMagnitude > 1e-6 && velocityMagnitude > 1e-6) {
             // Magnus force proportional to spin × velocity for foam balls
-            // Coefficient includes ball radius effect
+            // Coefficient is empirically determined and includes aerodynamic effects
             Vector3D magnusDirection = spin.cross(velocity);
             double magnusScaling = params.magnusCoefficient * spinMagnitude * velocityMagnitude;
             magnusForce = magnusDirection.scale(magnusScaling);
@@ -70,7 +70,7 @@ public class PhysicsModel {
         
         // Spin decay for foam balls
         // Decay rate increases with velocity (air resistance on spinning ball)
-        double spinDecayFactor = params.spinDecayRate * (1.0 + velocityMagnitude / 20.0);
+        double spinDecayFactor = params.spinDecayRate * (1.0 + velocityMagnitude / PhysicsConstants.SPIN_DECAY_VELOCITY_FACTOR);
         Vector3D spinDerivative = spin.scale(-spinDecayFactor);
         
         return new StateDerivative(velocity, totalAccel, spinDerivative);
@@ -114,15 +114,15 @@ public class PhysicsModel {
         
         // Update spin: loses energy on contact (foam compression) and friction
         // Spin reduction depends on impact severity and surface friction
-        double impactSeverity = Math.abs(vNormal) / 10.0; // normalized by typical velocity
-        double spinReduction = PhysicsConstants.SPIN_BOUNCE_REDUCTION_FACTOR * (1.0 + impactSeverity * 0.3);
+        double impactSeverity = Math.abs(vNormal) / PhysicsConstants.COLLISION_IMPACT_SEVERITY_SCALE; // normalized by typical velocity
+        double spinReduction = PhysicsConstants.SPIN_BOUNCE_REDUCTION_FACTOR * (1.0 + impactSeverity * PhysicsConstants.COLLISION_SEVERITY_FACTOR);
         spinReduction = Math.min(0.95, spinReduction); // Cap at 95% reduction
         Vector3D newSpin = state.spin.scale(1.0 - spinReduction);
         
         // Additional spin change from friction torque
         // Friction can induce or modify spin based on tangential velocity mismatch
         if (vTangent.magnitude() > 0.1) {
-            Vector3D frictionTorque = vTangent.cross(surfaceNormal).scale(params.frictionCoefficient * 0.1);
+            Vector3D frictionTorque = vTangent.cross(surfaceNormal).scale(params.frictionCoefficient * PhysicsConstants.FRICTION_TORQUE_SCALE);
             newSpin = newSpin.add(frictionTorque);
         }
         

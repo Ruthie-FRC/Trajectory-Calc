@@ -33,6 +33,15 @@ public class PhysicsConstants {
     public static final double SPIN_FRICTION_COUPLING = 0.15; // spin-to-tangential velocity coupling
     public static final double MAX_SPIN_RATE = 500.0; // rad/s safety limit
     
+    // Spin physics tuning constants
+    public static final double SPIN_DECAY_VELOCITY_FACTOR = 20.0; // m/s normalization for velocity-dependent decay
+    public static final double SPIN_ALIGNMENT_THRESHOLD = 0.5; // normalized spin alignment for bonus/penalty
+    public static final double SPIN_ALIGNMENT_BONUS = 0.2; // risk reduction for favorable backspin
+    public static final double SPIN_ALIGNMENT_PENALTY = 0.3; // risk increase for forward spin
+    public static final double COLLISION_IMPACT_SEVERITY_SCALE = 10.0; // m/s for impact normalization
+    public static final double COLLISION_SEVERITY_FACTOR = 0.3; // impact severity contribution to spin loss
+    public static final double FRICTION_TORQUE_SCALE = 0.1; // friction torque magnitude scaling
+    
     // Parameter safety limits
     public static final double MIN_DRAG_COEFFICIENT = 0.1;
     public static final double MAX_DRAG_COEFFICIENT = 2.0;
