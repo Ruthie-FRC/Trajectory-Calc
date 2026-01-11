@@ -114,21 +114,21 @@ public void shoot() {
 
 Look for systematic errors:
 
-**Pattern 1: All shots falling short**
-- Likely: Speed efficiency too high OR drag coefficient too high
-- Solution: Decrease `speedEfficiency` or decrease `dragCoefficient`
+**Systematic undershoots:**
+- Cause: Speed efficiency too high or drag coefficient too high
+- Adjustment: Decrease `speedEfficiency` or decrease `dragCoefficient`
 
-**Pattern 2: All shots going long**
-- Likely: Speed efficiency too low OR drag coefficient too low  
-- Solution: Increase `speedEfficiency` or increase `dragCoefficient`
+**Systematic overshoots:**
+- Cause: Speed efficiency too low or drag coefficient too low  
+- Adjustment: Increase `speedEfficiency` or increase `dragCoefficient`
 
-**Pattern 3: Close shots accurate, far shots inaccurate**
-- Likely: Drag coefficient incorrect
-- Solution: Adjust `dragCoefficient` based on range
+**Range-dependent error:**
+- Cause: Incorrect drag coefficient
+- Adjustment: Tune `dragCoefficient` based on distance trends
 
-**Pattern 4: Shots drift left/right**
-- Likely: Magnus effect from spin OR turret calibration
-- Solution: Adjust `magnusCoefficient` or check turret angle calibration
+**Lateral drift:**
+- Cause: Magnus effect from spin or turret miscalibration
+- Adjustment: Tune `magnusCoefficient` or verify turret angles
 
 ### Step 3: Calculate Corrections
 
@@ -169,72 +169,66 @@ CalibrationParameters params = new CalibrationParameters()
     .withDragCoefficient(0.45);  // Adjusted from 0.47
 ```
 
-## Automated Tuning from Logs
+### Automated Tuning
 
-### Batch Calibration (Traditional)
+#### Batch Calibration
 
-The library can auto-tune from your logged shots:
+Run calibration after collecting shot data:
 
 ```java
-// After a practice session, load all shots
+// Run after practice session
 public void calibrateFromPractice() {
-    // Shots are already logged via trajectoryCalc.logShot()
+    // Shots already logged via trajectoryCalc.logShot()
     
-    // Run calibration
     boolean updated = trajectoryCalc.calibrate();
     
     if (updated) {
         CalibrationParameters newParams = trajectoryCalc.getCalibrationParameters();
-        System.out.println("New parameters: " + newParams);
+        System.out.println("Parameters updated: " + newParams);
         
-        // Save to file or NetworkTables for next match
+        // Save for next match
         saveParameters(newParams);
     }
     
-    // View stats
     System.out.println(trajectoryCalc.getCalibrationStats());
 }
 ```
 
-### Incremental Calibration (NEW - Real-Time Learning)
+#### Incremental Calibration
 
-Enable automatic parameter updates after each shot during practice:
+Enable automatic updates during practice:
 
 ```java
-// In your subsystem constructor or init
+// Enable for practice
 public void initPracticeMode() {
-    // Enable incremental calibration for practice
     trajectoryCalc.setIncrementalCalibrationEnabled(true);
-    
-    // Set learning rate (0.0-1.0, default: 0.05)
     trajectoryCalc.setLearningRate(0.05); // 5% adjustment per shot
-    
-    // Parameters now update automatically after each logged shot!
+    // Parameters update automatically after each logged shot
 }
 
 public void initCompetitionMode() {
-    // Disable for stable competition performance
+    // Disable for stable performance
     trajectoryCalc.setIncrementalCalibrationEnabled(false);
 }
 ```
 
-**How Incremental Calibration Works:**
-1. Logs each shot result (hit/miss)
-2. Analyzes recent performance window (last 5 shots)
-3. If hit rate < 60%, adjusts drag and speed efficiency
-4. Updates parameters in real-time without manual intervention
-5. Requires 5 baseline shots before starting adjustments
+**Operation:**
+- Logs each shot result
+- Analyzes recent performance (last 5 shots)
+- Adjusts drag and speed efficiency when hit rate drops below 60%
+- Updates occur in real-time without manual intervention
+- Requires 5 baseline shots before starting
 
-**When to Use:**
-- **Practice sessions** - Continuous improvement
-- **Testing new balls** - Fast adaptation
-- **Pre-match warmup** - Quick tuning
-- **NOT Competition matches** - Use stable parameters
+**Usage:**
+- Practice sessions for continuous improvement
+- Testing new balls for fast adaptation
+- Pre-match warmup for quick tuning
+- NOT for competition matches (use stable parameters)
 
-**Monitoring Incremental Updates:**
+**Monitoring:**
 
 ```java
-// Log parameter changes in AdvantageKit
+// Track parameter changes
 @Override
 public void periodic() {
     CalibrationParameters params = trajectoryCalc.getCalibrationParameters();
@@ -245,33 +239,31 @@ public void periodic() {
 }
 ```
 
-**Best Practices:**
-- Start with learning rate of 0.05 (5%)
+**Recommendations:**
+- Start with 0.05 (5%) learning rate
 - Increase to 0.1 (10%) for faster adaptation if needed
-- Monitor in AdvantageScope to see parameter evolution
-- Let it run for 15-20 shots to stabilize
-- Save final parameters for competition use
+- Monitor parameter evolution in AdvantageScope
+- Allow 15-20 shots for stabilization
+- Save final parameters for competition
 
-### Pre-Seeded Guesses (NEW - Faster Convergence)
+### Pre-Seeded Optimization
 
-The solver automatically caches successful shots for faster convergence:
+The solver caches successful shots automatically:
 
 ```java
-// No configuration needed - enabled by default!
-// First shot from a position uses geometric estimate
-// Subsequent shots from nearby positions use cached angles
-
-// Shots are cached on a 0.5m position grid
-// Each successful shot improves future solves from that area
+// Enabled by default, no configuration needed
+// First shot uses geometric estimate
+// Subsequent nearby shots use cached angles
+// Cache uses 0.5m position grid
 ```
 
-**Benefits:**
+**Performance:**
 - 10-30% faster solve times for repeated positions
 - More consistent angle solutions
-- Automatic - no manual management needed
-- Cache clears automatically if disabled
+- Automatic cache management
+- Clears when disabled
 
-**Viewing Cache Performance:**
+**Measurement:**
 
 ```java
 // See solve times in logs
