@@ -4,13 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.ruthiefrc</groupId>
+    <groupId>frc.robot</groupId>
     <artifactId>trajectory-calc</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
     <name>Trajectory Calculator</name>
-    <description>Production-grade inverse ballistic solver for FRC robot shooter</description>
+    <description>Production-grade inverse ballistic solver for FRC robot shooters</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

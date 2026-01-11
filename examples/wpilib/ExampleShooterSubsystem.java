@@ -1,7 +1,7 @@
 package examples.wpilib;
 
-import com.ruthiefrc.trajectory.*;
-import com.ruthiefrc.trajectory.advantagekit.TrajectoryLogger;
+import frc.robot.trajectory.*;
+import frc.robot.trajectory.advantagekit.TrajectoryLogger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;

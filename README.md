@@ -1,69 +1,51 @@
 # Trajectory Calculator
 
-Production-grade inverse ballistic solver for FRC robot shooters. Calculate optimal launch angles from any position on the field with full physics modeling.
-
-## ✨ Perfect for AdvantageKit Teams!
-
-This library is designed to integrate seamlessly with **AdvantageKit logging**, making it easy to tune your shooter from logged match/practice data.
-
-## Quick Links
-
-- 🚀 **[QUICKSTART.md](QUICKSTART.md)** - Get running in 5 minutes
-- 📊 **[ADVANTAGEKIT_TUNING.md](ADVANTAGEKIT_TUNING.md)** - Tune from logs
-- 🎯 **[SPIN_SHOT_SIMULATOR.md](SPIN_SHOT_SIMULATOR.md)** - Hooded-turret shot analysis
-- 🎮 **[SHOOTER_AIMING_CONTROLLER.md](SHOOTER_AIMING_CONTROLLER.md)** - High-level turret/hood control (NEW)
-- 🌀 **[SPIN_PHYSICS.md](SPIN_PHYSICS.md)** - Spin modeling guide
-- 📖 **[WPILIB_INTEGRATION.md](WPILIB_INTEGRATION.md)** - Full integration guide
+Production-grade inverse ballistic solver for FRC robot shooters. Calculates optimal launch angles from any field position using full physics modeling including drag, Magnus effect, collisions, and spin decay.
 
 ## Features
 
-- ✅ Full physics: gravity, drag, Magnus effect, collisions, spin decay
-- ✅ Inverse solver: automatically computes launch angles
-- ✅ **SpinShotSimulator: exhaustive hooded-turret shot analysis**
-- ✅ **ShooterAimingController: high-level turret/hood control with field-relative coordinates (NEW)**
-- ✅ RK4 numerical integration with adaptive timestep
-- ✅ Shooter efficiency modeling with per-shot corrections
-- ✅ **Automatic AdvantageKit logging for easy tuning**
-- ✅ **Tune from robot logs - no manual testing needed!**
-- ✅ Incremental calibration and pre-seeded optimization
-- ✅ Calibration and learning system
-- ✅ Zero dependencies - works with any robot framework
-- ✅ Real-time safe and deterministic
-- ✅ Runtime-configurable parameters
+- Full physics simulation: gravity, quadratic drag, Magnus effect, collision response, spin decay
+- Inverse solver: automatically computes launch angles from target position
+- SpinShotSimulator: exhaustive hooded-turret shot analysis utility
+- ShooterAimingController: field-relative turret and hood control
+- RK4 numerical integration with adaptive timestep near surfaces
+- Shooter efficiency modeling with per-shot correction factors
+- AdvantageKit logging integration for data-driven tuning
+- Incremental calibration from logged shot data
+- Pre-seeded optimization with position-based caching
+- Zero external dependencies beyond WPILib base
+- Real-time safe (deterministic, <100ms guarantees)
+- Runtime-configurable ball properties and physics parameters
 
-## Quick Start
+## Installation
 
-### 1. Install via WPILib Vendor Deps
+### Via WPILib Vendor Dependencies
 
-```bash
-# In VS Code with your robot project open:
-# Ctrl+Shift+P → "Manage Vendor Libraries" → "Install new library (offline)"
-# Select: vendordeps/TrajectoryCalc.json from this repository
-```
+In VS Code with your robot project open:
+1. Press Ctrl+Shift+P
+2. Select "Manage Vendor Libraries"
+3. Choose "Install new library (offline)"
+4. Select `vendordeps/TrajectoryCalc.json` from this repository
 
-### 2. Add to Your Shooter Subsystem
+### Basic Usage
 
 ```java
-import com.ruthiefrc.trajectory.advantagekit.AdvantageKitTrajectoryHelper;
+import frc.robot.trajectory.logging.advantagekit.AdvantageKitTrajectoryHelper;
 
 public class ShooterSubsystem extends SubsystemBase {
-    // One line to set up trajectory calculator with AdvantageKit logging!
     private final AdvantageKitTrajectoryHelper trajectory = 
         new AdvantageKitTrajectoryHelper("Shooter/Trajectory");
     
     public void shoot(Pose2d robotPose) {
-        // Calculate and automatically log everything
         var solution = trajectory.calculateAndLog(
             robotPose.getX(), robotPose.getY(), 
             SHOOTER_HEIGHT, LAUNCH_SPEED, SPIN_RATE
         );
         
-        // Use the solution
         setTurretAngle(solution.launchYawDeg);
         setHoodAngle(solution.launchPitchDeg);
         fire();
         
-        // After 1-2 seconds, log the result
         boolean hit = checkIfScored();
         trajectory.logShotResult(
             robotPose.getX(), robotPose.getY(),
@@ -73,51 +55,40 @@ public class ShooterSubsystem extends SubsystemBase {
 }
 ```
 
-### 3. View Logs in AdvantageScope
+### AdvantageScope Integration
 
-All your trajectory data automatically appears in AdvantageScope under `Shooter/Trajectory/`:
-- Input parameters (robot position, speeds)
-- Output calculations (angles, quality scores)
-- Shot results (hit/miss)
+Trajectory data appears in AdvantageScope under `Shooter/Trajectory/`:
+- Input parameters (position, velocity, spin)
+- Output calculations (angles, risk scores)
+- Shot results and outcomes
 - Calibration parameters
 
-### 4. Tune from Logs
-
-After practice, review your logs and tune:
+### Calibration
 
 ```java
-// Option 1: Manual tuning from log analysis
-trajectory.updateCalibration(0.45, 0.92);  // drag, speed efficiency
+// Manual parameter adjustment
+trajectory.updateCalibration(0.45, 0.92);
 
-// Option 2: Automatic tuning
-trajectory.calibrate();  // Uses logged shot data
+// Automatic calibration from logged shots
+trajectory.calibrate();
 ```
 
-## Documentation
+## Key Capabilities
 
-- **[ADVANTAGEKIT_TUNING.md](ADVANTAGEKIT_TUNING.md)** - Complete guide for tuning from AdvantageKit logs ⭐
-- **[SPIN_SHOT_SIMULATOR.md](SPIN_SHOT_SIMULATOR.md)** - Software-only hooded-turret shot analysis ⭐ (NEW)
-- **[SPIN_PHYSICS.md](SPIN_PHYSICS.md)** - Comprehensive spin modeling guide
-- **[WPILIB_INTEGRATION.md](WPILIB_INTEGRATION.md)** - Full WPILib integration guide
-- **[INTEGRATION.md](INTEGRATION.md)** - General usage and API reference
-- **[examples/](examples/)** - Complete working examples
+### AdvantageKit Teams
 
-## Why This Library?
+- Automatic logging to AdvantageScope for all calculations
+- Data-driven calibration from match and practice logs
+- Shot outcome tracking and analysis
+- Rapid iteration without manual tuning
 
-### For AdvantageKit Teams
+### General Use
 
-- 📊 **Auto-logging**: Every calculation automatically logged to AdvantageScope
-- 🎯 **Tune from data**: Use real match logs to calibrate, no guesswork
-- 🔬 **Track everything**: See exactly what your shooter is doing
-- 🚀 **Iterate fast**: Test changes, review logs, repeat
-
-### For All Teams
-
-- 🎮 **Shoot from anywhere**: No more lookup tables or hardcoded zones
-- 🧮 **Real physics**: Drag, spin, collisions - not just parabolas
-- ⚡ **Fast**: 5-20ms calculations, real-time safe
-- 🔧 **Adaptable**: Learns and improves from real shots
-- 📦 **Easy integration**: Works with any WPILib robot (2024+)
+- Field-position-independent shooting (no lookup tables required)
+- Physics-based trajectories (not simplified parabolas)
+- 5-20ms calculation time (real-time safe)
+- Continuous learning from shot data
+- Compatible with any WPILib robot (2024+)
 
 ## Installation
 

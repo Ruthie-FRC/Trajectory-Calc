@@ -1,6 +1,6 @@
 package examples.standalone;
 
-import com.ruthiefrc.trajectory.*;
+import frc.robot.trajectory.*;
 
 /**
  * Standalone example showing how to use the trajectory calculator
