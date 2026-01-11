@@ -172,16 +172,19 @@ public class TurretTrajectoryTester {
         
         // First, try to find ANY trajectory that hits by comprehensive search
         // Search space: speeds from reasonable minimum to max, pitches around geometric estimate
-        // For very close shots, use lower minimum speed; for long shots, use higher minimum
+        // For very close shots, use lower minimum speed; for long shots, ensure we search full range
         double minSpeed;
         if (distanceToTarget < 2.0) {
             // Very close shots need lower speeds to avoid overshooting
             minSpeed = Math.max(5.0, distanceToTarget * 3.0);
+        } else if (distanceToTarget > 10.0) {
+            // Very long shots (10-15m) need to try higher speeds but start from reasonable baseline
+            minSpeed = Math.max(MIN_SPEED_FLOOR * 1.5, distanceToTarget * 1.2);
         } else if (distanceToTarget > 7.0) {
-            // Long shots need higher speeds
-            minSpeed = Math.max(MIN_SPEED_FLOOR, distanceToTarget * 1.5);
+            // Long shots (7-10m) - use moderate starting speed
+            minSpeed = Math.max(MIN_SPEED_FLOOR, distanceToTarget * 1.0);
         } else {
-            // Normal range
+            // Normal range (2-7m)
             minSpeed = Math.max(MIN_SPEED_FLOOR, distanceToTarget * MIN_SPEED_FACTOR);
         }
         minSpeed = Math.min(minSpeed, maxSpeed);
@@ -192,30 +195,56 @@ public class TurretTrajectoryTester {
         double bestPitch = geometricPitch;
         double bestScore = -Double.MAX_VALUE;
         
-        // Two-phase comprehensive search for 100% success rate
-        // Phase 1: Coarse grid search to find promising regions
-        // Phase 2: Fine search around best candidates
+        // Two-phase comprehensive search for 100% success rate up to 15m
+        // Phase 1: Search full pitch range AND near geometric estimate
+        // Combine absolute angle search with geometry-guided search
         
-        // Phase 1: Coarse search
-        int coarseSpeedSteps = 10;
+        // Build comprehensive pitch angle list
+        java.util.Set<Double> pitchAngleSet = new java.util.HashSet<>();
+        
+        // Always include angles near geometric estimate
+        for (int offset = -35; offset <= 35; offset += 3) {
+            double angle = geometricPitch + offset;
+            if (angle >= 5.0 && angle <= 85.0) {
+                pitchAngleSet.add(angle);
+            }
+        }
+        
+        // Also include key absolute angles across full range
+        double[] keyAbsoluteAngles;
+        if (distanceToTarget > 8.0) {
+            keyAbsoluteAngles = new double[]{15, 20, 25, 30, 35, 40, 45, 50, 55, 60};
+        } else if (distanceToTarget > 5.0) {
+            keyAbsoluteAngles = new double[]{20, 25, 30, 35, 40, 45, 50, 55, 60, 65};
+        } else if (distanceToTarget < 2.0) {
+            keyAbsoluteAngles = new double[]{45, 50, 55, 60, 65, 70, 75, 80};
+        } else {
+            keyAbsoluteAngles = new double[]{20, 25, 30, 35, 40, 45, 50, 55, 60, 65};
+        }
+        
+        for (double angle : keyAbsoluteAngles) {
+            pitchAngleSet.add(angle);
+        }
+        
+        // Convert to sorted array for consistent search
+        Double[] pitchAngles = pitchAngleSet.toArray(new Double[0]);
+        java.util.Arrays.sort(pitchAngles);
+        
+        // Speed and yaw configuration
+        int coarseSpeedSteps = distanceToTarget > 8.0 ? 15 : (distanceToTarget > 5.0 ? 12 : 10);
+        double[] coarseYawOffsets = distanceToTarget > 8.0 ? 
+            new double[]{0, -5, 5, -10, 10, -15, 15, -20, 20, -3, 3, -7, 7} :
+            new double[]{0, -6, 6, -12, 12, -18, 18, -3, 3, -9, 9};
+        
         double coarseSpeedStep = (maxSpeed - minSpeed) / coarseSpeedSteps;
         
-        // Coarse pitch offsets: wider spacing
-        double[] coarsePitchOffsets = {0, -10, 10, -20, 20, -30, 30, -5, 5, -15, 15, -25, 25};
-        
-        // Coarse yaw offsets: wider spacing
-        double[] coarseYawOffsets = {0, -6, 6, -12, 12, -18, 18, -3, 3, -9, 9, -15, 15};
-        
-        // Coarse search for hits
+        // Comprehensive search
         for (int s = 0; s <= coarseSpeedSteps; s++) {
             double testSpeed = minSpeed + s * coarseSpeedStep;
             if (testSpeed > maxSpeed) continue;
             
-            for (double pitchOffset : coarsePitchOffsets) {
-                double testPitch = geometricPitch + pitchOffset;
-                
-                // Expanded pitch range to handle extreme cases
-                if (testPitch < 5.0 || testPitch > 75.0) continue;
+            for (double testPitch : pitchAngles) {
+                if (testPitch < 5.0 || testPitch > 85.0) continue;
                 
                 for (double yawOffset : coarseYawOffsets) {
                     double testYaw = targetYaw + yawOffset;
