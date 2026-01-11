@@ -1,24 +1,24 @@
 # AdvantageKit Tuning Guide
 
-This guide shows how to use AdvantageKit logs from your robot to tune the trajectory calculator parameters.
+This guide covers using AdvantageKit logs to tune trajectory calculator parameters.
 
-## Overview
+## Parameter Tuning Overview
 
-The trajectory calculator needs to be tuned to match your specific robot's characteristics:
-- Ball compression in your shooter
+The trajectory calculator requires tuning to match your robot's characteristics:
+- Ball compression in the shooter
 - Wheel wear and grip
-- Actual launch velocity vs commanded
-- Air resistance (can vary with ball wear)
+- Actual vs commanded launch velocity
+- Air resistance variations with ball condition
 
-Your AdvantageKit logs will provide real-world data to tune these parameters automatically.
+AdvantageKit logs provide the data needed for automatic parameter optimization.
 
-## Quick Setup
+## Setup
 
-### 1. Install the Library
+### Install Library
 
-Add `TrajectoryCalc.json` to your `vendordeps/` folder using WPILib's vendor library manager.
+Add `TrajectoryCalc.json` to `vendordeps/` using WPILib's vendor library manager.
 
-### 2. Add to Your Shooter Subsystem
+### Add to Shooter Subsystem
 
 ```java
 import com.ruthiefrc.trajectory.*;
@@ -34,9 +34,7 @@ public class ShooterSubsystem extends SubsystemBase {
     
     @Override
     public void periodic() {
-        // Your existing code...
-        
-        // Log trajectory data every loop
+        // Log trajectory data each cycle
         logTrajectoryData();
     }
     
@@ -51,7 +49,7 @@ public class ShooterSubsystem extends SubsystemBase {
 }
 ```
 
-### 3. Log Each Shot
+### Log Each Shot
 
 ```java
 public void shoot() {

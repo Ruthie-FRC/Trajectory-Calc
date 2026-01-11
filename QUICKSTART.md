@@ -226,87 +226,86 @@ controller.logShot(x, y, z, solution, speed, spin, hit);
 controller.setIncrementalCalibrationEnabled(false);
 ```
 
-**How it works:**
-- After each logged shot, system analyzes recent performance
-- If hit rate drops below 60%, adjusts drag and speed efficiency
+**Behavior:**
+- Analyzes recent performance after each logged shot
+- Adjusts drag and speed efficiency when hit rate drops below 60%
 - Learning rate controls adaptation speed (0.0-1.0, default: 0.05)
-- Requires 5 baseline shots before incremental updates begin
-- Changes are applied automatically, no manual calibration needed
+- Requires 5 baseline shots before updates begin
+- Changes apply automatically without manual calibration
 
-### Pre-Seeded Guesses (NEW)
+### Pre-Seeded Optimization
 
-Solver uses previous successful shots for faster convergence:
+The solver caches previous successful shots for faster convergence:
 
 ```java
-// First shot - uses geometric estimate
+// First shot uses geometric estimate
 var solution1 = controller.calculateShot(3.0, 0.0, 0.5, 12.0, 100.0);
 
-// Second shot from nearby position - uses cached angles
+// Subsequent shots from nearby positions use cached angles
 var solution2 = controller.calculateShot(3.1, 0.1, 0.5, 12.0, 100.0);
-// Converges faster with better initial guess
 
-// Control pre-seeding (enabled by default)
-// Note: Access through solver if needed for custom control
+// Pre-seeding is enabled by default
+// Access through solver for custom control if needed
 ```
 
-**Benefits:**
+**Performance:**
 - Faster convergence for repeated shots
 - More consistent solutions
 - Reduces computation time by 10-30%
-- Automatically caches successful shots on 0.5m grid
+- Automatic caching on 0.5m grid
 
-### Ball Condition
+### Ball Properties
 
-Switch configurations based on ball wear:
+Configure for different ball conditions:
 
 ```java
-// For worn/compressed balls (lighter, smaller)
+// Worn or compressed balls
 controller.updateProjectileProperties(ProjectileProperties.wornBall());
 
-// For heavy balls (0.500 lb)
+// Heavy balls (0.500 lb)
 controller.updateProjectileProperties(ProjectileProperties.heavyBall());
 
-// For light balls (0.448 lb)
+// Light balls (0.448 lb)
 controller.updateProjectileProperties(ProjectileProperties.lightBall());
 
-// Custom ball properties
+// Custom configuration
 ProjectileProperties custom = new ProjectileProperties(
-    0.14,   // diameter in meters (slightly compressed)
-    0.210   // mass in kg
+    0.14,   // diameter (meters)
+    0.210   // mass (kg)
 );
 controller.updateProjectileProperties(custom);
 ```
 
 ### Logging Control
 
-Reduce CPU load during competition:
+Toggle logging to reduce CPU usage:
 
 ```java
-// Disable logging during competition
+// Competition mode
 controller.setLoggingEnabled(false);
 
-// Enable for practice
+// Practice mode
 controller.setLoggingEnabled(true);
 ```
 
 ### Per-Shot Corrections
 
-Fine-tune individual shots:
+Adjust individual shots:
 
 ```java
 CalibrationParameters adjusted = currentParams
-    .withSpeedCorrectionFactor(0.98)  // 2% speed reduction this shot
-    .withSpinCorrectionFactor(1.05);  // 5% more spin this shot
+    .withSpeedCorrectionFactor(0.98)  // 2% speed reduction
+    .withSpinCorrectionFactor(1.05);  // 5% more spin
 
 controller.updateCalibration(adjusted);
 ```
 
-### Safety Limits
+### Parameter Safety
 
-All parameters are automatically clamped to safe ranges:
+All parameters are automatically constrained:
 
 ```java
-// These values are automatically constrained:
+// Constraint ranges:
 // - Drag coefficient: 0.1 - 2.0
 // - Speed efficiency: 0.5 - 1.0
 // - Spin efficiency: 0.5 - 1.0
@@ -314,42 +313,41 @@ All parameters are automatically clamped to safe ranges:
 // - Restitution: 0.0 - 1.0
 // - Friction: 0.0 - 1.0
 
-// Extreme values are clamped automatically
+// Extreme values are automatically clamped
 CalibrationParameters safe = new CalibrationParameters()
     .withDragCoefficient(10.0);  // Clamped to 2.0
-// No need to manually validate!
 ```
 
-## Common Issues
+## Troubleshooting
 
-### "No solution found"
-- Robot too far from target
-- Launch speed too low
-- Check if `canReachTarget()` returns true
+### No solution found
+- Robot exceeds maximum range to target
+- Launch speed insufficient
+- Check `canReachTarget()` return value
 
-### "Shots miss consistently"
-- Need to tune parameters (see Step 5)
-- Check if turret/hood angles are accurate
-- Verify shooter wheel speed is consistent
+### Shots miss consistently
+- Parameters require tuning (see Parameter Tuning section)
+- Verify turret and hood angles are accurate
+- Check shooter wheel speed consistency
 
-### "Not seeing logs in AdvantageScope"
-- Make sure AdvantageKit is set up in your robot
-- Check that you're calling `calculateAndLog()`
-- Verify logs are being saved
+### Logs not visible in AdvantageScope
+- Confirm AdvantageKit is configured in robot code
+- Verify `calculateAndLog()` is being called
+- Check log file generation
 
-## Next Steps
+## Further Reading
 
-- **Read**: [ADVANTAGEKIT_TUNING.md](ADVANTAGEKIT_TUNING.md) for detailed tuning guide
-- **See**: [examples/wpilib/](examples/wpilib/) for complete examples
-- **Learn**: [WPILIB_INTEGRATION.md](WPILIB_INTEGRATION.md) for advanced features
+- [ADVANTAGEKIT_TUNING.md](ADVANTAGEKIT_TUNING.md) - Detailed calibration procedures
+- [examples/wpilib/](examples/wpilib/) - Complete implementation examples  
+- [WPILIB_INTEGRATION.md](WPILIB_INTEGRATION.md) - Advanced integration topics
 
-## Need Help?
+## Support
 
-- Check the documentation files in this repository
-- Open an issue on GitHub
+- Review documentation files in this repository
+- Open GitHub issue for bugs or feature requests
 - Post on Chief Delphi with [TrajectoryCalc] tag
 
-## Quick Reference
+## API Reference
 
 ```java
 // Calculate trajectory
