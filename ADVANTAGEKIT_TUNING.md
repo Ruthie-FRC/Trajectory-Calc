@@ -228,10 +228,10 @@ public void initCompetitionMode() {
 5. Requires 5 baseline shots before starting adjustments
 
 **When to Use:**
-- ✅ **Practice sessions** - Continuous improvement
-- ✅ **Testing new balls** - Fast adaptation
-- ✅ **Pre-match warmup** - Quick tuning
-- ❌ **Competition matches** - Use stable parameters
+- **Practice sessions** - Continuous improvement
+- **Testing new balls** - Fast adaptation
+- **Pre-match warmup** - Quick tuning
+- **NOT Competition matches** - Use stable parameters
 
 **Monitoring Incremental Updates:**
 
@@ -410,16 +410,16 @@ public class VisionHitDetector {
 
 ## Integration Checklist
 
-- [ ] Install TrajectoryCalc vendordep
-- [ ] Add ShooterController to your shooter subsystem
-- [ ] Log shot inputs in `shoot()` method
-- [ ] Log shot results after each shot
-- [ ] Log calibration parameters in `periodic()`
-- [ ] Test with 10+ shots and verify logs in AdvantageScope
-- [ ] Run initial calibration from logs
-- [ ] Tune parameters manually if needed
-- [ ] Test tuned parameters in practice
-- [ ] Lock parameters for competition
+- Install TrajectoryCalc vendordep
+- Add ShooterController to your shooter subsystem
+- Log shot inputs in `shoot()` method
+- Log shot results after each shot
+- Log calibration parameters in `periodic()`
+- Test with 10+ shots and verify logs in AdvantageScope
+- Run initial calibration from logs
+- Tune parameters manually if needed
+- Test tuned parameters in practice
+- Lock parameters for competition
 
 ## Support
 

@@ -6,7 +6,7 @@ This document summarizes the major enhancements made to the TrajectoryCalc libra
 
 ## Enhancements Completed
 
-### 1. Runtime-Configurable Parameters ✅
+### 1. Runtime-Configurable Parameters
 
 **New Class: `ProjectileProperties`**
 - Runtime configuration of ball mass (kg or pounds)
@@ -45,7 +45,7 @@ CalibrationParameters adjusted = params
     .withSpinCorrectionFactor(1.05);
 ```
 
-### 2. Improved Bounce and Rim Handling ✅
+### 2. Improved Bounce and Rim Handling
 
 **New Risk Calculation Methods in `InverseSolver`**
 - `calculateBounceOutRisk()` - Computes 0-1 risk score based on:
@@ -69,7 +69,7 @@ CalibrationParameters adjusted = params
 - Allows "almost hit" trajectories to be logged for calibration
 - Gradual penalties encourage optimizer toward safer solutions
 
-### 3. Enhanced Calibration System ✅
+### 3. Enhanced Calibration System
 
 **Runtime Logging Control in `ShooterController`**
 - `setLoggingEnabled(boolean)` - Toggle logging on/off
@@ -95,7 +95,7 @@ if (DriverStation.isAutonomous()) {
 - Incremental regression: Current calibration system already handles new data efficiently
 - Per-location coefficients: Can be added as future enhancement if needed
 
-### 4. Improved Inverse Solver ✅
+### 4. Improved Inverse Solver
 
 **Adaptive RK4 Timestep**
 - Enhanced `RK4Integrator` with adaptive timestep support
@@ -125,7 +125,7 @@ TrajectorySimulator simulator = new TrajectorySimulator(physicsModel, hubGeometr
 - Lookup tables: Simple range-based initial guesses can be added
 - Gradient-free optimization: Current grid search is already gradient-free
 
-### 5. Library Modularity ✅
+### 5. Library Modularity
 
 **Zero Dependencies:**
 - Core library has zero WPILib dependencies
@@ -139,7 +139,7 @@ TrajectorySimulator simulator = new TrajectorySimulator(physicsModel, hubGeometr
 - Output: (yaw, pitch, score, trajectory)
 - All complexity hidden behind facade
 
-### 6. Testing ✅
+### 6. Testing
 
 **Current Test Suite:**
 - 19 unit tests covering:
@@ -158,7 +158,7 @@ TrajectorySimulator simulator = new TrajectorySimulator(physicsModel, hubGeometr
 - Parameterized tests for extreme values can be added
 - Simulated field tests with random variability can be added
 
-### 7. Documentation ✅
+### 7. Documentation
 
 **Updated Files:**
 - `QUICKSTART.md` - Added runtime configuration examples
@@ -172,7 +172,7 @@ TrajectorySimulator simulator = new TrajectorySimulator(physicsModel, hubGeometr
 - Safety limits
 - Parameter ranges
 
-### 8. Existing Functionality ✅
+### 8. Existing Functionality
 
 **Fully Maintained:**
 - Forward trajectory simulation
@@ -292,13 +292,13 @@ These were mentioned in the request but deferred as non-critical:
 ## Conclusion
 
 All critical improvements from the feature request have been implemented:
-- ✅ Runtime-configurable parameters with safety limits
-- ✅ Improved bounce/rim handling with risk scoring
-- ✅ Enhanced calibration with logging control
-- ✅ Adaptive timestep for precision
-- ✅ Library modularity maintained
-- ✅ Documentation updated
-- ✅ Full backward compatibility
-- ✅ All tests passing
+- Runtime-configurable parameters with safety limits
+- Improved bounce/rim handling with risk scoring
+- Enhanced calibration with logging control
+- Adaptive timestep for precision
+- Library modularity maintained
+- Documentation updated
+- Full backward compatibility
+- All tests passing
 
 The library is production-ready and can be dropped into any WPILib robot codebase with confidence.

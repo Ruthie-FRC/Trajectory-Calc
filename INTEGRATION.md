@@ -4,14 +4,14 @@ A high-precision inverse ballistic solver for FRC robot shooters. Computes optim
 
 ## Features
 
-- ✅ **Full Physics Model**: Gravity, quadratic drag, Magnus effect, collisions
-- ✅ **Inverse Solver**: Automatically calculates launch angles from any position
-- ✅ **RK4 Integration**: Accurate numerical integration with configurable timestep
-- ✅ **Shooter Modeling**: Accounts for wheel slip, ball deformation, and efficiency losses
-- ✅ **Calibration System**: Learn from real shots and improve accuracy over time
-- ✅ **Zero External Dependencies**: Pure Java, works with any robot framework
-- ✅ **Real-time Safe**: Deterministic, no allocations in hot path
-- ✅ **Production Ready**: Comprehensive tests, clean API, documented
+- **Full Physics Model**: Gravity, quadratic drag, Magnus effect, collisions
+- **Inverse Solver**: Automatically calculates launch angles from any position
+- **RK4 Integration**: Accurate numerical integration with configurable timestep
+- **Shooter Modeling**: Accounts for wheel slip, ball deformation, and efficiency losses
+- **Calibration System**: Learn from real shots and improve accuracy over time
+- **Zero External Dependencies**: Pure Java, works with any robot framework
+- **Real-time Safe**: Deterministic, no allocations in hot path
+- **Production Ready**: Comprehensive tests, clean API, documented
 
 ## Quick Start
 

@@ -1,26 +1,24 @@
 # Quick Start Guide
 
-Get up and running in 5 minutes!
+This guide covers installation and basic usage. Most teams can integrate the library in under 10 minutes.
 
-## Step 1: Install (2 minutes)
+## Installation
 
-### Download Vendordep
+### Add Vendordep
 
-1. Go to this repository on GitHub
-2. Download `vendordeps/TrajectoryCalc.json`
+1. Download `vendordeps/TrajectoryCalc.json` from this repository
+2. Open your robot project in VS Code
+3. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
+4. Type "WPILib: Manage Vendor Libraries"
+5. Select "Install new library (offline)"
+6. Navigate to the downloaded JSON file
+7. Select it
 
-### Add to Your Robot
+The library will be added to your project dependencies.
 
-1. Open your robot project in VS Code
-2. Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (Mac)
-3. Type "WPILib: Manage Vendor Libraries"
-4. Select "Install new library (offline)"
-5. Navigate to the `TrajectoryCalc.json` you downloaded
-6. Click "Select"
+## Basic Integration
 
-Done! The library is now part of your project.
-
-## Step 2: Add to Subsystem (2 minutes)
+### Shooter Subsystem
 
 Create or update your shooter subsystem:
 
@@ -33,10 +31,9 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ShooterSubsystem extends SubsystemBase {
-    // One line setup with runtime-configurable parameters!
     private final AdvantageKitTrajectoryHelper trajectory;
     
-    // Your robot's constants
+    // Robot constants
     private static final double SHOOTER_HEIGHT = 0.8;  // meters
     private static final double LAUNCH_SPEED = 12.0;   // m/s
     private static final double SPIN_RATE = 100.0;     // rad/s
@@ -44,10 +41,10 @@ public class ShooterSubsystem extends SubsystemBase {
     private InverseSolver.SolutionResult lastSolution;
     
     public ShooterSubsystem() {
-        // Option 1: Use defaults
+        // Basic setup with defaults
         trajectory = new AdvantageKitTrajectoryHelper("Shooter/Trajectory");
         
-        // Option 2: Custom calibration from the start
+        // Alternative: Initialize with custom calibration
         // CalibrationParameters params = new CalibrationParameters()
         //     .withSpeedEfficiency(0.92)
         //     .withDragCoefficient(0.45);
@@ -55,7 +52,7 @@ public class ShooterSubsystem extends SubsystemBase {
     }
     
     public void calculateAim(Pose2d robotPose) {
-        // Calculates angles + logs to AdvantageKit automatically
+        // Computes launch angles and logs to AdvantageKit
         lastSolution = trajectory.calculateAndLog(
             robotPose.getX(), 
             robotPose.getY(),
@@ -67,7 +64,7 @@ public class ShooterSubsystem extends SubsystemBase {
     
     public void aimShooter() {
         if (lastSolution != null && lastSolution.isHit()) {
-            // TODO: Replace with your actual hardware
+            // Apply angles to your hardware
             // setTurretAngle(lastSolution.launchYawDeg);
             // setHoodAngle(lastSolution.launchPitchDeg);
             
@@ -83,10 +80,10 @@ public class ShooterSubsystem extends SubsystemBase {
         );
     }
     
-    // NEW: Runtime configuration examples
+    // Runtime Configuration
     
     /**
-     * Switch to worn ball configuration (lighter, smaller).
+     * Configure for worn or compressed balls.
      */
     public void useWornBall() {
         trajectory.getController().updateProjectileProperties(
@@ -95,14 +92,14 @@ public class ShooterSubsystem extends SubsystemBase {
     }
     
     /**
-     * Disable logging during competition to reduce CPU load.
+     * Reduce CPU load during competition.
      */
     public void disableLogging() {
         trajectory.getController().setLoggingEnabled(false);
     }
     
     /**
-     * Enable logging for practice/testing.
+     * Enable detailed logging for practice.
      */
     public void enableLogging() {
         trajectory.getController().setLoggingEnabled(true);
@@ -110,9 +107,9 @@ public class ShooterSubsystem extends SubsystemBase {
 }
 ```
 
-## Step 3: Use in Commands (1 minute)
+## Command Integration
 
-```java
+Bind aiming to a command:
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
@@ -161,59 +158,61 @@ Bind to a button in RobotContainer:
 driverController.y().whileTrue(new AutoAimAndShoot(shooter, drive));
 ```
 
-## Step 4: View Logs
+## Viewing Logs
 
-1. Enable your robot
-2. Drive around and press your aim button
+After running your robot:
+
+1. Enable the robot and drive around
+2. Press the aiming button
 3. Open AdvantageScope
-4. Load your log file
-5. Look under `Shooter/Trajectory/`
+4. Load the log file
+5. Navigate to `Shooter/Trajectory/`
 
-You'll see:
-- `Input/*` - Robot position, speeds
-- `Output/*` - Calculated angles, predicted hit
+Log structure:
+- `Input/*` - Robot position and commanded speeds
+- `Output/*` - Calculated angles and predictions
 - `Calibration/*` - Current tuning parameters
 
-## Step 5: Tune Parameters
+## Parameter Tuning
 
-After practice, analyze your logs:
+After collecting practice data, adjust parameters based on performance:
 
-### Manual Tuning
+### Manual Adjustment
 
-If shots are falling short:
+If shots consistently fall short:
 ```java
-// In your subsystem
+// Adjust drag or speed efficiency
 public void tuneDrag() {
     CalibrationParameters newParams = trajectory.getCalibrationParameters()
-        .withDragCoefficient(0.45)        // Decrease if shots short
-        .withSpeedEfficiency(0.93);        // Increase if speed low
+        .withDragCoefficient(0.45)        // Lower if shots are short
+        .withSpeedEfficiency(0.93);        // Raise if speed is low
     
     trajectory.updateCalibration(newParams);
 }
 ```
 
-### Auto Tuning
+### Automatic Calibration
 
-After collecting 10+ shots with logged results:
+After collecting 10+ logged shots with results:
 
 ```java
-// Add this method to your subsystem
+// Run calibration after practice
 public void calibrate() {
     boolean updated = trajectory.calibrate();
     if (updated) {
-        System.out.println("Calibration improved!");
+        System.out.println("Calibration updated");
         System.out.println(trajectory.getCalibrationStats());
     }
 }
 ```
 
-Call it in test mode or disabled after practice.
+Call this method in test mode after practice sessions.
 
-## Runtime Configuration Features (NEW)
+## Advanced Configuration
 
-### Incremental Calibration (NEW)
+### Incremental Calibration
 
-Enable real-time parameter learning during practice:
+Enable continuous parameter adjustment during practice:
 
 ```java
 // Enable incremental calibration for practice
@@ -372,4 +371,4 @@ trajectory.updateCalibration(dragCoeff, speedEfficiency);
 CalibrationParameters params = trajectory.getCalibrationParameters();
 ```
 
-That's it! You're ready to shoot from anywhere on the field! 🎯
+That's it! You're ready to shoot from anywhere on the field.
