@@ -53,6 +53,8 @@ public class PhysicsModel {
         // Magnus force: F_magnus = Cm × (ω × v)
         // The cross product magnitude already contains |ω| × |v| × sin(θ)
         // The coefficient Cm accounts for aerodynamic effects
+        // Units: Cm [dimensionless] × (ω [rad/s] × v [m/s]) = force per mass when divided by mass
+        // Note: rad is dimensionless, so [1/s × m/s] → [m/s²] when scaled by Cm/mass
         double velocityMagnitude = Math.sqrt(speedSquared);
         Vector3D magnusForce;
         
