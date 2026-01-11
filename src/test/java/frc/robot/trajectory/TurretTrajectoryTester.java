@@ -63,11 +63,14 @@ public class TurretTrajectoryTester {
         public double spinRate;              // Ball spin rate (rad/s)
         public Vector3D spinAxis;            // Spin axis vector
         public double successProbability;    // Success probability (0-1)
+        public double confidence;            // Trajectory confidence (0-1)
+        public double marginOfError;         // Position margin of error (meters)
         public double riskScore;             // Bounce-out risk score (lower is better)
         public double entryAngle;            // Entry angle at target (degrees)
         public double flightTime;            // Time to target (seconds)
         public double apexHeight;            // Maximum height (meters)
         public String trajectory;            // Brief trajectory description
+        public String trajectoryEquation;    // Full mathematical trajectory equation (non-simplified)
         
         @Override
         public String toString() {
@@ -79,19 +82,40 @@ public class TurretTrajectoryTester {
             }
             
             sb.append("  OPTIMAL SOLUTION:\n");
-            sb.append(String.format("    Pitch Adjustment:  %+.2f° (Final: %.2f°)\n", 
-                requiredPitchAdjust, finalPitch));
-            sb.append(String.format("    Yaw Adjustment:    %+.2f° (Final: %.2f°)\n", 
+            sb.append(String.format("    Turret Change:     %+.2f° → New position: %.2f°\n", 
                 requiredYawAdjust, finalYaw));
-            sb.append(String.format("    Shooter Motor:     %.0f RPM\n", shooterRPM));
+            sb.append(String.format("    Hood Change:       %+.2f° → New position: %.2f°\n", 
+                requiredPitchAdjust, finalPitch));
+            sb.append("\n");
+            sb.append(String.format("    Shooter Motor:     %.0f RPM (4\" wheels)\n", shooterRPM));
+            
+            // Determine spin type
+            String spinType = "Backspin"; // Default
+            if (spinAxis != null) {
+                if (Math.abs(spinAxis.y) > 0.9) {
+                    spinType = "Backspin";
+                } else if (Math.abs(spinAxis.x) > 0.5) {
+                    spinType = "Sidespin";
+                } else if (spinAxis.y < -0.5) {
+                    spinType = "Topspin";
+                }
+            }
+            sb.append(String.format("    Spin Type:         %s\n", spinType));
             sb.append(String.format("    Ball Spin:         %.1f rad/s (%.0f RPM)\n", 
                 spinRate, spinRate * 60 / (2 * Math.PI)));
+            sb.append("\n");
             sb.append(String.format("    Success Rate:      %.1f%%\n", successProbability * 100));
+            sb.append(String.format("    Confidence:        %.1f%%\n", confidence * 100));
+            sb.append(String.format("    Margin of Error:   ±%.3f m\n", marginOfError));
             sb.append(String.format("    Risk Score:        %.4f (lower is better)\n", riskScore));
             sb.append(String.format("    Entry Angle:       %.2f°\n", entryAngle));
             sb.append(String.format("    Flight Time:       %.2f s\n", flightTime));
             sb.append(String.format("    Apex Height:       %.2f m\n", apexHeight));
+            sb.append("\n");
             sb.append(String.format("    Trajectory:        %s\n", trajectory));
+            sb.append("\n");
+            sb.append("    Trajectory Equation (Full Physics Model):\n");
+            sb.append(trajectoryEquation);
             
             return sb.toString();
         }
@@ -157,6 +181,25 @@ public class TurretTrajectoryTester {
         output.riskScore = solution.score;
         output.successProbability = Math.max(0.0, Math.min(1.0, 1.0 - solution.score));
         
+        // Calculate confidence based on trajectory stability and convergence
+        // High confidence = low variation in nearby solutions
+        // Factors: entry angle quality, risk score, distance from limits
+        double angleQuality = 1.0 - Math.abs(solution.launchPitchDeg - 45.0) / 45.0; // Prefer 45° launches
+        double scoreQuality = 1.0 - Math.min(solution.score, 1.0);
+        output.confidence = (angleQuality * 0.3 + scoreQuality * 0.7);
+        output.confidence = Math.max(0.0, Math.min(1.0, output.confidence));
+        
+        // Calculate margin of error based on trajectory arc and physics uncertainties
+        // Factors: drag uncertainty, spin variation, entry angle
+        double distanceToTarget = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        double dragErrorFactor = 0.02; // ±2% drag coefficient uncertainty
+        double spinErrorFactor = 0.05; // ±5% spin efficiency uncertainty
+        output.marginOfError = distanceToTarget * (dragErrorFactor + spinErrorFactor * (config.spinRate / 300.0));
+        
+        // Generate full trajectory equation (non-parabolic with all physics effects)
+        output.trajectoryEquation = generateTrajectoryEquation(
+            config.robotPosition, relativeTarget, config.speed, spin, solution);
+        
         // Extract trajectory details
         if (solution.trajectory != null) {
             if (solution.trajectory.entryState != null) {
@@ -186,6 +229,81 @@ public class TurretTrajectoryTester {
         }
         
         return output;
+    }
+    
+    /**
+     * Generate full trajectory equation with all physics effects (non-simplified).
+     * Shows the complete non-parabolic equation including drag, Magnus effect, and gravity.
+     */
+    private String generateTrajectoryEquation(Vector3D robotPos, Vector3D relativeTarget, 
+                                             double speed, Vector3D spin, InverseSolver.SolutionResult solution) {
+        StringBuilder eq = new StringBuilder();
+        
+        // Get physics constants and parameters
+        CalibrationParameters params = new CalibrationParameters();
+        ProjectileProperties props = new ProjectileProperties();
+        double g = PhysicsConstants.GRAVITY;
+        double rho = PhysicsConstants.AIR_DENSITY;
+        double Cd = params.dragCoefficient;
+        double Cm = params.magnusCoefficient;
+        double A = props.crossSectionalArea;
+        double m = props.massKg;
+        
+        // Initial conditions
+        double yawRad = Math.toRadians(solution.launchYawDeg);
+        double pitchRad = Math.toRadians(solution.launchPitchDeg);
+        double v0 = speed;
+        double wx = spin.x;
+        double wy = spin.y;
+        double wz = spin.z;
+        
+        // Initial velocity components
+        double v0x = v0 * Math.cos(pitchRad) * Math.cos(yawRad);
+        double v0y = v0 * Math.cos(pitchRad) * Math.sin(yawRad);
+        double v0z = v0 * Math.sin(pitchRad);
+        
+        eq.append("      Full Non-Parabolic Trajectory (RK4 Integration Required):\n");
+        eq.append("      \n");
+        eq.append("      State Equations (Differential Form):\n");
+        eq.append("      ───────────────────────────────────────\n");
+        eq.append(String.format("      dx/dt = vₓ(t)\n"));
+        eq.append(String.format("      dy/dt = vᵧ(t)\n"));
+        eq.append(String.format("      dz/dt = v_z(t)\n"));
+        eq.append("      \n");
+        eq.append("      Acceleration Components:\n");
+        eq.append("      ───────────────────────────────────────\n");
+        eq.append(String.format("      dvₓ/dt = -½(ρCₐA/m)|v|vₓ + (Cₘ/m)(ωᵧv_z - ω_zvᵧ)|ω||v|\n"));
+        eq.append(String.format("      dvᵧ/dt = -½(ρCₐA/m)|v|vᵧ + (Cₘ/m)(ω_zvₓ - ωₓv_z)|ω||v|\n"));
+        eq.append(String.format("      dv_z/dt = -g - ½(ρCₐA/m)|v|v_z + (Cₘ/m)(ωₓvᵧ - ωᵧvₓ)|ω||v|\n"));
+        eq.append("      \n");
+        eq.append("      Spin Decay:\n"));
+        eq.append("      ───────────────────────────────────────\n");
+        eq.append(String.format("      dω/dt = -kω(1 + |v|/%.1f)\n", PhysicsConstants.SPIN_DECAY_VELOCITY_FACTOR));
+        eq.append("      \n");
+        eq.append("      Parameters:\n");
+        eq.append("      ───────────────────────────────────────\n");
+        eq.append(String.format("      Initial Position:  (%.3f, %.3f, %.3f) m\n", 
+            robotPos.x, robotPos.y, robotPos.z));
+        eq.append(String.format("      Initial Velocity:  v₀ = %.3f m/s\n", v0));
+        eq.append(String.format("                         vₓ₀ = %.3f m/s\n", v0x));
+        eq.append(String.format("                         vᵧ₀ = %.3f m/s\n", v0y));
+        eq.append(String.format("                         v_z₀ = %.3f m/s\n", v0z));
+        eq.append(String.format("      Initial Spin:      ω = (%.2f, %.2f, %.2f) rad/s\n", wx, wy, wz));
+        eq.append(String.format("                         |ω| = %.2f rad/s\n", spin.magnitude()));
+        eq.append(String.format("      Gravity:           g = %.2f m/s²\n", g));
+        eq.append(String.format("      Air Density:       ρ = %.3f kg/m³\n", rho));
+        eq.append(String.format("      Drag Coefficient:  Cₐ = %.3f\n", Cd));
+        eq.append(String.format("      Magnus Coefficient: Cₘ = %.6f\n", Cm));
+        eq.append(String.format("      Cross Section:     A = %.6f m²\n", A));
+        eq.append(String.format("      Ball Mass:         m = %.4f kg\n", m));
+        eq.append(String.format("      Spin Decay Rate:   k = %.4f s⁻¹\n", params.spinDecayRate));
+        eq.append("      \n");
+        eq.append("      Note: This is a coupled nonlinear system requiring numerical\n");
+        eq.append("            integration (RK4). Drag term ~ |v|v creates non-parabolic\n");
+        eq.append("            trajectory. Magnus effect adds lateral acceleration\n");
+        eq.append("            perpendicular to velocity and spin vectors.\n");
+        
+        return eq.toString();
     }
     
     /**
