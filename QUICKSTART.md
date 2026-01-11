@@ -27,15 +27,14 @@ Create or update your shooter subsystem:
 ```java
 package frc.robot.subsystems;
 
+import com.ruthiefrc.trajectory.*;
 import com.ruthiefrc.trajectory.advantagekit.AdvantageKitTrajectoryHelper;
-import com.ruthiefrc.trajectory.InverseSolver;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ShooterSubsystem extends SubsystemBase {
-    // One line setup!
-    private final AdvantageKitTrajectoryHelper trajectory = 
-        new AdvantageKitTrajectoryHelper("Shooter/Trajectory");
+    // One line setup with runtime-configurable parameters!
+    private final AdvantageKitTrajectoryHelper trajectory;
     
     // Your robot's constants
     private static final double SHOOTER_HEIGHT = 0.8;  // meters
@@ -43,6 +42,17 @@ public class ShooterSubsystem extends SubsystemBase {
     private static final double SPIN_RATE = 100.0;     // rad/s
     
     private InverseSolver.SolutionResult lastSolution;
+    
+    public ShooterSubsystem() {
+        // Option 1: Use defaults
+        trajectory = new AdvantageKitTrajectoryHelper("Shooter/Trajectory");
+        
+        // Option 2: Custom calibration from the start
+        // CalibrationParameters params = new CalibrationParameters()
+        //     .withSpeedEfficiency(0.92)
+        //     .withDragCoefficient(0.45);
+        // trajectory = new AdvantageKitTrajectoryHelper("Shooter/Trajectory", params);
+    }
     
     public void calculateAim(Pose2d robotPose) {
         // Calculates angles + logs to AdvantageKit automatically
@@ -71,6 +81,31 @@ public class ShooterSubsystem extends SubsystemBase {
             robotPose.getX(), robotPose.getY(),
             lastSolution, LAUNCH_SPEED, SPIN_RATE, hit
         );
+    }
+    
+    // NEW: Runtime configuration examples
+    
+    /**
+     * Switch to worn ball configuration (lighter, smaller).
+     */
+    public void useWornBall() {
+        trajectory.getController().updateProjectileProperties(
+            ProjectileProperties.wornBall()
+        );
+    }
+    
+    /**
+     * Disable logging during competition to reduce CPU load.
+     */
+    public void disableLogging() {
+        trajectory.getController().setLoggingEnabled(false);
+    }
+    
+    /**
+     * Enable logging for practice/testing.
+     */
+    public void enableLogging() {
+        trajectory.getController().setLoggingEnabled(true);
     }
 }
 ```
@@ -147,13 +182,14 @@ After practice, analyze your logs:
 
 If shots are falling short:
 ```java
-// In your subsystem constructor
-private final AdvantageKitTrajectoryHelper trajectory = 
-    new AdvantageKitTrajectoryHelper("Shooter/Trajectory",
-        new CalibrationParameters()
-            .withSpeedEfficiency(0.92)    // Decrease if short
-            .withDragCoefficient(0.45)     // Decrease if short at range
-    );
+// In your subsystem
+public void tuneDrag() {
+    CalibrationParameters newParams = trajectory.getCalibrationParameters()
+        .withDragCoefficient(0.45)        // Decrease if shots short
+        .withSpeedEfficiency(0.93);        // Increase if speed low
+    
+    trajectory.updateCalibration(newParams);
+}
 ```
 
 ### Auto Tuning
@@ -172,6 +208,73 @@ public void calibrate() {
 ```
 
 Call it in test mode or disabled after practice.
+
+## Runtime Configuration Features (NEW)
+
+### Ball Condition
+
+Switch configurations based on ball wear:
+
+```java
+// For worn/compressed balls (lighter, smaller)
+controller.updateProjectileProperties(ProjectileProperties.wornBall());
+
+// For heavy balls (0.500 lb)
+controller.updateProjectileProperties(ProjectileProperties.heavyBall());
+
+// For light balls (0.448 lb)
+controller.updateProjectileProperties(ProjectileProperties.lightBall());
+
+// Custom ball properties
+ProjectileProperties custom = new ProjectileProperties(
+    0.14,   // diameter in meters (slightly compressed)
+    0.210   // mass in kg
+);
+controller.updateProjectileProperties(custom);
+```
+
+### Logging Control
+
+Reduce CPU load during competition:
+
+```java
+// Disable logging during competition
+controller.setLoggingEnabled(false);
+
+// Enable for practice
+controller.setLoggingEnabled(true);
+```
+
+### Per-Shot Corrections
+
+Fine-tune individual shots:
+
+```java
+CalibrationParameters adjusted = currentParams
+    .withSpeedCorrectionFactor(0.98)  // 2% speed reduction this shot
+    .withSpinCorrectionFactor(1.05);  // 5% more spin this shot
+
+controller.updateCalibration(adjusted);
+```
+
+### Safety Limits
+
+All parameters are automatically clamped to safe ranges:
+
+```java
+// These values are automatically constrained:
+// - Drag coefficient: 0.1 - 2.0
+// - Speed efficiency: 0.5 - 1.0
+// - Spin efficiency: 0.5 - 1.0
+// - Magnus coefficient: 0.0 - 0.001
+// - Restitution: 0.0 - 1.0
+// - Friction: 0.0 - 1.0
+
+// Extreme values are clamped automatically
+CalibrationParameters safe = new CalibrationParameters()
+    .withDragCoefficient(10.0);  // Clamped to 2.0
+// No need to manually validate!
+```
 
 ## Common Issues
 

@@ -3,24 +3,45 @@ package com.ruthiefrc.trajectory;
 /**
  * Main facade for the trajectory calculation system.
  * Provides a clean interface for robot code to compute shooting parameters.
+ * Supports runtime-configurable parameters and optional logging.
  */
 public class ShooterController {
-    private final PhysicsModel physicsModel;
+    private PhysicsModel physicsModel;
+    private final ProjectileProperties projectile;
     private final HubGeometry hubGeometry;
-    private final TrajectorySimulator simulator;
-    private final InverseSolver solver;
+    private TrajectorySimulator simulator;
+    private InverseSolver solver;
     private final CalibrationSystem calibration;
+    private boolean loggingEnabled;
     
     public ShooterController() {
-        this(new CalibrationParameters());
+        this(new CalibrationParameters(), new ProjectileProperties());
     }
     
     public ShooterController(CalibrationParameters initialParams) {
+        this(initialParams, new ProjectileProperties());
+    }
+    
+    public ShooterController(CalibrationParameters initialParams, ProjectileProperties projectile) {
+        this.projectile = projectile;
         this.calibration = new CalibrationSystem(initialParams);
-        this.physicsModel = new PhysicsModel(initialParams);
+        this.physicsModel = new PhysicsModel(initialParams, projectile);
         this.hubGeometry = new HubGeometry();
         this.simulator = new TrajectorySimulator(physicsModel, hubGeometry);
         this.solver = new InverseSolver(simulator);
+        this.loggingEnabled = true; // Default: logging enabled
+    }
+    
+    /**
+     * Enable or disable shot logging at runtime.
+     * Useful for reducing overhead during competition.
+     */
+    public void setLoggingEnabled(boolean enabled) {
+        this.loggingEnabled = enabled;
+    }
+    
+    public boolean isLoggingEnabled() {
+        return loggingEnabled;
     }
     
     /**
@@ -59,10 +80,15 @@ public class ShooterController {
     
     /**
      * Log a shot result for calibration.
+     * Only logs if logging is enabled.
      */
     public void logShot(double robotX, double robotY, double robotZ,
                        InverseSolver.SolutionResult solution, double launchSpeed, 
                        double spinRate, boolean hit) {
+        if (!loggingEnabled) {
+            return; // Skip logging if disabled
+        }
+        
         Vector3D robotPose = new Vector3D(robotX, robotY, robotZ);
         calibration.logShot(robotPose, solution, launchSpeed, spinRate, hit);
     }
@@ -84,11 +110,26 @@ public class ShooterController {
     
     /**
      * Update calibration parameters and reinitialize components.
+     * This allows runtime tuning of physics parameters.
      */
     public void updateCalibration(CalibrationParameters params) {
         calibration.updateParameters(params);
-        // Note: In a real system, we'd recreate the physics model and solver
-        // For simplicity, parameters are set at construction time
+        
+        // Recreate physics components with new parameters
+        this.physicsModel = new PhysicsModel(params, projectile);
+        this.simulator = new TrajectorySimulator(physicsModel, hubGeometry);
+        this.solver = new InverseSolver(simulator);
+    }
+    
+    /**
+     * Update projectile properties at runtime.
+     * Use this when switching to worn balls or different ball types.
+     */
+    public void updateProjectileProperties(ProjectileProperties newProjectile) {
+        CalibrationParameters currentParams = calibration.getCurrentParameters();
+        this.physicsModel = new PhysicsModel(currentParams, newProjectile);
+        this.simulator = new TrajectorySimulator(physicsModel, hubGeometry);
+        this.solver = new InverseSolver(simulator);
     }
     
     /**
@@ -106,6 +147,13 @@ public class ShooterController {
      */
     public CalibrationParameters getCalibrationParameters() {
         return calibration.getCurrentParameters();
+    }
+    
+    /**
+     * Get current projectile properties.
+     */
+    public ProjectileProperties getProjectileProperties() {
+        return projectile;
     }
     
     /**
