@@ -1,4 +1,10 @@
-package frc.robot.trajectory;
+package frc.robot.trajectory.solver;
+
+import frc.robot.trajectory.physics.PhysicsConstants;
+import frc.robot.trajectory.physics.PhysicsModel;
+import frc.robot.trajectory.physics.ProjectileState;
+import frc.robot.trajectory.physics.StateDerivative;
+import frc.robot.trajectory.util.Vector3D;
 
 /**
  * Fourth-order Runge-Kutta (RK4) numerical integrator.

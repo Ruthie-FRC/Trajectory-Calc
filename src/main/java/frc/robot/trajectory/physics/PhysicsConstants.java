@@ -1,4 +1,6 @@
-package frc.robot.trajectory;
+package frc.robot.trajectory.physics;
+
+import frc.robot.trajectory.calibration.CalibrationParameters;
 
 /**
  * Physical constants and projectile properties for FRC ballistic calculations.

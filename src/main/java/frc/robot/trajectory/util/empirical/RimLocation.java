@@ -1,4 +1,5 @@
-package frc.robot.trajectory.empirical;
+package frc.robot.trajectory.util.empirical;
+
 
 /**
  * Location of rim contact for rim-out shots.

@@ -1,6 +1,8 @@
-package frc.robot.trajectory.advantagekit;
+package frc.robot.trajectory.logging.advantagekit;
 
-import frc.robot.trajectory.*;
+import frc.robot.trajectory.ShooterController;
+import frc.robot.trajectory.calibration.CalibrationParameters;
+import frc.robot.trajectory.solver.InverseSolver;
 
 /**
  * Helper class for integrating trajectory calculator with AdvantageKit logging.

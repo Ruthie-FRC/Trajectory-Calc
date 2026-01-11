@@ -1,4 +1,11 @@
-package frc.robot.trajectory;
+package frc.robot.trajectory.calibration;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import frc.robot.trajectory.solver.InverseSolver;
+import frc.robot.trajectory.util.ShotLog;
+import frc.robot.trajectory.util.Vector3D;
 
 import java.util.ArrayList;
 import java.util.Collections;

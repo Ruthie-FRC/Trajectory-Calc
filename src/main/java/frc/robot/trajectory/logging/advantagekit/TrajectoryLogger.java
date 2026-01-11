@@ -1,6 +1,7 @@
-package frc.robot.trajectory.advantagekit;
+package frc.robot.trajectory.logging.advantagekit;
 
-import frc.robot.trajectory.*;
+import frc.robot.trajectory.calibration.CalibrationParameters;
+import frc.robot.trajectory.solver.InverseSolver;
 
 /**
  * AdvantageKit-compatible logging interface for trajectory calculations.

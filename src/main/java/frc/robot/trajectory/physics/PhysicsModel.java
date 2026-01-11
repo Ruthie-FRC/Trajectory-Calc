@@ -1,4 +1,7 @@
-package frc.robot.trajectory;
+package frc.robot.trajectory.physics;
+
+import frc.robot.trajectory.calibration.CalibrationParameters;
+import frc.robot.trajectory.util.Vector3D;
 
 /**
  * Physics model for projectile motion including gravity, drag, and Magnus effect.

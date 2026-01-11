@@ -1,4 +1,6 @@
-package frc.robot.trajectory;
+package frc.robot.trajectory.calibration;
+
+import frc.robot.trajectory.physics.PhysicsConstants;
 
 /**
  * Calibration parameters for the trajectory model.

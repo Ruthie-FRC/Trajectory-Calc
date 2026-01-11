@@ -1,4 +1,11 @@
-package frc.robot.trajectory;
+package frc.robot.trajectory.aiming;
+
+import java.util.HashMap;
+import java.util.Map;
+import frc.robot.trajectory.calibration.CalibrationParameters;
+import frc.robot.trajectory.physics.ProjectileProperties;
+import frc.robot.trajectory.simulation.SpinShotSimulator;
+import frc.robot.trajectory.util.Vector3D;
 
 import java.util.HashMap;
 import java.util.Map;

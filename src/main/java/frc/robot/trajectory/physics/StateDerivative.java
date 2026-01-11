@@ -1,4 +1,6 @@
-package frc.robot.trajectory;
+package frc.robot.trajectory.physics;
+
+import frc.robot.trajectory.util.Vector3D;
 
 /**
  * Derivative of the projectile state (velocity, acceleration, spin rate of change).

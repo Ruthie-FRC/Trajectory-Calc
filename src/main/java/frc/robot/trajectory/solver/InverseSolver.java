@@ -1,4 +1,12 @@
-package frc.robot.trajectory;
+package frc.robot.trajectory.solver;
+
+import java.util.HashMap;
+import java.util.Map;
+import frc.robot.trajectory.physics.HubGeometry;
+import frc.robot.trajectory.physics.PhysicsConstants;
+import frc.robot.trajectory.physics.ProjectileState;
+import frc.robot.trajectory.simulation.TrajectorySimulator;
+import frc.robot.trajectory.util.Vector3D;
 
 import java.util.HashMap;
 import java.util.Map;

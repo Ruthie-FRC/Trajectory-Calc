@@ -1,11 +1,15 @@
-package frc.robot.trajectory.empirical;
+package frc.robot.trajectory.util.empirical;
 
-import frc.robot.trajectory.Vector3D;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import frc.robot.trajectory.util.Vector3D;
 
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 /**
  * Records and analyzes real shot attempts to bridge ideal physics and real-world shooter behavior.
  * 

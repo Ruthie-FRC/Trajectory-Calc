@@ -1,5 +1,15 @@
 package frc.robot.trajectory;
 
+import frc.robot.trajectory.calibration.CalibrationParameters;
+import frc.robot.trajectory.calibration.CalibrationSystem;
+import frc.robot.trajectory.physics.HubGeometry;
+import frc.robot.trajectory.physics.PhysicsConstants;
+import frc.robot.trajectory.physics.PhysicsModel;
+import frc.robot.trajectory.physics.ProjectileProperties;
+import frc.robot.trajectory.simulation.TrajectorySimulator;
+import frc.robot.trajectory.solver.InverseSolver;
+import frc.robot.trajectory.util.Vector3D;
+
 /**
  * Main facade for the trajectory calculation system.
  * Provides a clean interface for robot code to compute shooting parameters.

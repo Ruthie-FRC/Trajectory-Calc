@@ -1,4 +1,5 @@
-package frc.robot.trajectory;
+package frc.robot.trajectory.util;
+
 
 /**
  * 3D vector for position, velocity, and angular velocity (spin).

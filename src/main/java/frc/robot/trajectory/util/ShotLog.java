@@ -1,4 +1,5 @@
-package frc.robot.trajectory;
+package frc.robot.trajectory.util;
+
 
 /**
  * Logged shot data for calibration and learning.

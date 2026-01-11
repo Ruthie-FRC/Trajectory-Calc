@@ -1,6 +1,6 @@
-package frc.robot.trajectory.empirical;
+package frc.robot.trajectory.util.empirical;
 
-import frc.robot.trajectory.Vector3D;
+import frc.robot.trajectory.util.Vector3D;
 
 /**
  * Represents a single recorded shot attempt with inputs and outcome.

@@ -1,4 +1,5 @@
-package frc.robot.trajectory;
+package frc.robot.trajectory.physics;
+
 
 /**
  * Runtime-configurable projectile properties.
