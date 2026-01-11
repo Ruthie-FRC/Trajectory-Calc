@@ -1,14 +1,23 @@
 package com.ruthiefrc.trajectory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Inverse ballistic solver using iterative shooting method.
  * Solves for launch angles given robot pose, target, and launch speed.
+ * Enhanced with pre-seeded guesses from previous successful shots.
  */
 public class InverseSolver {
     private final TrajectorySimulator simulator;
     private final HubGeometry hubGeometry;
     private final int maxIterations;
     private final double convergenceTolerance;
+    
+    // Pre-seeded guess system
+    private final Map<String, SolutionResult> successfulShotCache;
+    private boolean usePreSeededGuesses;
+    private SolutionResult lastSuccessfulSolution;
     
     public InverseSolver(TrajectorySimulator simulator) {
         this(simulator, 50, PhysicsConstants.CONVERGENCE_TOLERANCE);
@@ -19,26 +28,82 @@ public class InverseSolver {
         this.hubGeometry = simulator.getHubGeometry();
         this.maxIterations = maxIterations;
         this.convergenceTolerance = convergenceTolerance;
+        this.successfulShotCache = new HashMap<>();
+        this.usePreSeededGuesses = true; // Enabled by default
+        this.lastSuccessfulSolution = null;
+    }
+    
+    /**
+     * Enable or disable pre-seeded guesses from previous successful shots.
+     */
+    public void setUsePreSeededGuesses(boolean enabled) {
+        this.usePreSeededGuesses = enabled;
+    }
+    
+    public boolean isUsingPreSeededGuesses() {
+        return usePreSeededGuesses;
+    }
+    
+    /**
+     * Clear the cache of successful shots.
+     */
+    public void clearShotCache() {
+        successfulShotCache.clear();
+        lastSuccessfulSolution = null;
+    }
+    
+    /**
+     * Get cache key for position-based lookup.
+     */
+    private String getCacheKey(Vector3D robotPosition, double speed) {
+        // Round to 0.5m grid for cache lookup
+        int gridX = (int) Math.round(robotPosition.x * 2.0);
+        int gridY = (int) Math.round(robotPosition.y * 2.0);
+        int gridSpeed = (int) Math.round(speed);
+        return gridX + "," + gridY + "," + gridSpeed;
     }
     
     /**
      * Solve for launch parameters to hit the target.
      * Returns the optimal launch angles and expected hit quality.
+     * Uses pre-seeded guesses from previous successful shots when available.
      */
     public SolutionResult solve(Vector3D robotPosition, double nominalLaunchSpeed, double spinRate) {
         Vector3D targetCenter = hubGeometry.getCenter();
         
-        // Initial guess for launch angles based on geometric aim
-        double dx = targetCenter.x - robotPosition.x;
-        double dy = targetCenter.y - robotPosition.y;
-        double dz = targetCenter.z - robotPosition.z;
-        double horizontalDist = Math.sqrt(dx * dx + dy * dy);
+        // Try to get pre-seeded guess from cache or last successful shot
+        double yawDeg, pitchDeg;
         
-        // Initial yaw angle (direction to target)
-        double yawDeg = Math.toDegrees(Math.atan2(dy, dx));
-        
-        // Initial pitch angle (rough ballistic estimate)
-        double pitchDeg = Math.toDegrees(Math.atan2(dz, horizontalDist)) + 5.0; // add elevation
+        if (usePreSeededGuesses) {
+            String cacheKey = getCacheKey(robotPosition, nominalLaunchSpeed);
+            SolutionResult cachedSolution = successfulShotCache.get(cacheKey);
+            
+            if (cachedSolution != null && cachedSolution.isHit()) {
+                // Use cached solution as initial guess
+                yawDeg = cachedSolution.launchYawDeg;
+                pitchDeg = cachedSolution.launchPitchDeg;
+            } else if (lastSuccessfulSolution != null && lastSuccessfulSolution.isHit()) {
+                // Use last successful solution as fallback
+                yawDeg = lastSuccessfulSolution.launchYawDeg;
+                pitchDeg = lastSuccessfulSolution.launchPitchDeg;
+            } else {
+                // Fall back to geometric estimate
+                double dx = targetCenter.x - robotPosition.x;
+                double dy = targetCenter.y - robotPosition.y;
+                double dz = targetCenter.z - robotPosition.z;
+                double horizontalDist = Math.sqrt(dx * dx + dy * dy);
+                yawDeg = Math.toDegrees(Math.atan2(dy, dx));
+                pitchDeg = Math.toDegrees(Math.atan2(dz, horizontalDist)) + 5.0;
+            }
+        } else {
+            // Use geometric estimate
+            double dx = targetCenter.x - robotPosition.x;
+            double dy = targetCenter.y - robotPosition.y;
+            double dz = targetCenter.z - robotPosition.z;
+            double horizontalDist = Math.sqrt(dx * dx + dy * dy);
+            yawDeg = Math.toDegrees(Math.atan2(dy, dx));
+            pitchDeg = Math.toDegrees(Math.atan2(dz, horizontalDist)) + 5.0;
+        }
         
         // Iterative refinement using gradient descent / shooting method
         double bestYaw = yawDeg;
@@ -125,7 +190,16 @@ public class InverseSolver {
             }
         }
         
-        return new SolutionResult(bestYaw, bestPitch, bestScore, bestResult);
+        SolutionResult solution = new SolutionResult(bestYaw, bestPitch, bestScore, bestResult);
+        
+        // Cache successful solution for future use
+        if (solution.isHit() && usePreSeededGuesses) {
+            String cacheKey = getCacheKey(robotPosition, nominalLaunchSpeed);
+            successfulShotCache.put(cacheKey, solution);
+            lastSuccessfulSolution = solution;
+        }
+        
+        return solution;
     }
     
     /**

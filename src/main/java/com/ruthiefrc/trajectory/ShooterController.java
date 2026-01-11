@@ -79,8 +79,30 @@ public class ShooterController {
     }
     
     /**
+     * Enable or disable incremental calibration.
+     * When enabled, parameters are updated after each logged shot.
+     * Use during practice; disable during competition.
+     */
+    public void setIncrementalCalibrationEnabled(boolean enabled) {
+        calibration.setIncrementalCalibrationEnabled(enabled);
+    }
+    
+    public boolean isIncrementalCalibrationEnabled() {
+        return calibration.isIncrementalCalibrationEnabled();
+    }
+    
+    /**
+     * Set learning rate for incremental calibration (0.0 - 1.0).
+     * Higher values = faster adaptation but less stability.
+     */
+    public void setLearningRate(double rate) {
+        calibration.setLearningRate(rate);
+    }
+    
+    /**
      * Log a shot result for calibration.
      * Only logs if logging is enabled.
+     * If incremental calibration is enabled, updates parameters automatically.
      */
     public void logShot(double robotX, double robotY, double robotZ,
                        InverseSolver.SolutionResult solution, double launchSpeed, 
@@ -91,6 +113,12 @@ public class ShooterController {
         
         Vector3D robotPose = new Vector3D(robotX, robotY, robotZ);
         calibration.logShot(robotPose, solution, launchSpeed, spinRate, hit);
+        
+        // If incremental calibration is enabled and parameters changed, update components
+        CalibrationParameters newParams = calibration.getCurrentParameters();
+        if (!newParams.equals(getCalibrationParameters()) && calibration.isIncrementalCalibrationEnabled()) {
+            updateCalibration(newParams);
+        }
     }
     
     /**
