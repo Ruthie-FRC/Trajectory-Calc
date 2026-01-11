@@ -25,6 +25,7 @@ public class TurretTrajectoryTester {
     
     private final InverseSolver solver;
     private final SpinShotSimulator simulator;
+    private final TrajectorySimulator trajSimulator;
     private final double maxFlywheelRPM;
     private final double defaultSpinRate;
     private final double wheelDiameterMeters = 0.1016; // 4 inches
@@ -138,6 +139,7 @@ public class TurretTrajectoryTester {
         TrajectorySimulator trajSim = new TrajectorySimulator(physics, hub);
         this.solver = new InverseSolver(trajSim);
         this.simulator = new SpinShotSimulator(calibration, projectile);
+        this.trajSimulator = trajSim;
         this.maxFlywheelRPM = maxFlywheelRPM;
         this.defaultSpinRate = defaultSpinRate;
     }
@@ -145,6 +147,7 @@ public class TurretTrajectoryTester {
     /**
      * Compute optimal solution accounting for turret position and orientation.
      * Now respects max flywheel RPM constraint.
+     * Uses comprehensive search to find trajectories that actually hit the target.
      */
     public SolutionOutput computeOptimalShot(TestConfig config) {
         SolutionOutput output = new SolutionOutput();
@@ -160,49 +163,93 @@ public class TurretTrajectoryTester {
         double wheelCircumference = Math.PI * wheelDiameterMeters;
         double maxSpeed = (maxFlywheelRPM * wheelCircumference) / 60.0;
         
-        // Try progressively higher speeds starting from a reasonable minimum
-        // Most FRC shots need at least MIN_SPEED_FLOOR m/s, but can go up to the max
-        double distanceToTarget = Math.sqrt(dx * dx + dy * dy);
-        double minSpeed = Math.max(MIN_SPEED_FLOOR, distanceToTarget * MIN_SPEED_FACTOR);
-        minSpeed = Math.min(minSpeed, maxSpeed); // Can't exceed max
+        // Calculate required yaw to point at target
+        double targetYaw = Math.toDegrees(Math.atan2(dy, dx));
         
-        InverseSolver.SolutionResult bestSolution = null;
+        // Geometric estimate for initial pitch
+        double distanceToTarget = Math.sqrt(dx * dx + dy * dy);
+        double geometricPitch = Math.toDegrees(Math.atan2(dz, distanceToTarget));
+        
+        // First, try to find ANY trajectory that hits by comprehensive search
+        // Search space: speeds from reasonable minimum to max, pitches around geometric estimate
+        double minSpeed = Math.max(MIN_SPEED_FLOOR, distanceToTarget * MIN_SPEED_FACTOR);
+        minSpeed = Math.min(minSpeed, maxSpeed);
+        
+        TrajectorySimulator.TrajectoryResult bestResult = null;
         double bestSpeed = 0;
+        double bestYaw = targetYaw;
+        double bestPitch = geometricPitch;
         double bestScore = -Double.MAX_VALUE;
         
-        // Try different speeds with finer resolution
-        double speedStep = (maxSpeed - minSpeed) / SPEED_SEARCH_STEPS;
+        // Comprehensive search: try many combinations to find hits
+        // Speed range: min to max in reasonable steps
+        int speedSteps = 15;
+        double speedStep = (maxSpeed - minSpeed) / speedSteps;
         
-        for (int i = 0; i <= SPEED_SEARCH_STEPS; i++) {
-            double testSpeed = minSpeed + i * speedStep;
+        // Pitch range: geometric estimate ±20° to handle various trajectories
+        double[] pitchOffsets = {0, -5, 5, -10, 10, -15, 15, -20, 20, -3, 3, -7, 7, -12, 12, -17, 17};
+        
+        // Yaw range: target direction ±10° to handle slight variations
+        double[] yawOffsets = {0, -3, 3, -6, 6, -9, 9, -2, 2, -5, 5};
+        
+        // Search for hits
+        for (int s = 0; s <= speedSteps; s++) {
+            double testSpeed = minSpeed + s * speedStep;
             if (testSpeed > maxSpeed) continue;
             
-            // Solve for optimal trajectory at this speed
-            // Pass robot position (absolute), not relative target
-            InverseSolver.SolutionResult solution = solver.solve(
-                config.robotPosition, testSpeed, spin);
-            
-            if (solution != null && solution.isHit() && solution.score > bestScore) {
-                bestScore = solution.score;
-                bestSolution = solution;
-                bestSpeed = testSpeed;
+            for (double pitchOffset : pitchOffsets) {
+                double testPitch = geometricPitch + pitchOffset;
+                
+                // Limit pitch to reasonable range [10°, 70°]
+                if (testPitch < 10.0 || testPitch > 70.0) continue;
+                
+                for (double yawOffset : yawOffsets) {
+                    double testYaw = targetYaw + yawOffset;
+                    
+                    // Simulate this trajectory
+                    TrajectorySimulator.TrajectoryResult result = trajSimulator.simulateWithShooterModel(
+                        config.robotPosition, testSpeed, testYaw, testPitch, spin);
+                    
+                    if (result.hitTarget) {
+                        double score = result.entryScore;
+                        
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestResult = result;
+                            bestSpeed = testSpeed;
+                            bestYaw = testYaw;
+                            bestPitch = testPitch;
+                            
+                            // If we found a great shot, we can stop searching
+                            if (score > 0.6) {
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // Early exit if we found an excellent shot
+                if (bestScore > 0.6) break;
             }
+            
+            // Early exit if we found an excellent shot
+            if (bestScore > 0.6) break;
         }
         
-        InverseSolver.SolutionResult solution = bestSolution;
-        
-        if (solution == null || !solution.isHit()) {
+        // If we didn't find a hit, return no solution
+        if (bestResult == null || !bestResult.hitTarget) {
             output.hasShot = false;
             return output;
         }
         
+        // We found a trajectory that hits! Now extract the parameters
         output.hasShot = true;
         
         // Calculate adjustments needed from current turret orientation
-        output.requiredYawAdjust = solution.launchYawDeg - config.turretYawOffset;
-        output.requiredPitchAdjust = solution.launchPitchDeg - config.turretPitchOffset;
-        output.finalYaw = solution.launchYawDeg;
-        output.finalPitch = solution.launchPitchDeg;
+        output.requiredYawAdjust = bestYaw - config.turretYawOffset;
+        output.requiredPitchAdjust = bestPitch - config.turretPitchOffset;
+        output.finalYaw = bestYaw;
+        output.finalPitch = bestPitch;
         
         // Convert speed to shooter RPM
         output.shooterRPM = (bestSpeed / wheelCircumference) * 60.0;
@@ -210,56 +257,51 @@ public class TurretTrajectoryTester {
         output.spinRate = config.spinRate;
         output.spinAxis = spin.normalize();
         
-        // Calculate success probability from risk score
-        // Lower risk = higher probability
-        output.riskScore = solution.score;
-        output.successProbability = Math.max(0.0, Math.min(1.0, 1.0 - solution.score));
+        // Calculate success probability from entry score
+        output.riskScore = 1.0 - bestScore; // Lower score = lower risk
+        output.successProbability = bestScore; // Score directly represents quality
         
-        // Calculate confidence based on trajectory stability and convergence
-        // High confidence = low variation in nearby solutions
-        // Factors: entry angle quality, risk score, distance from limits
-        double angleQuality = 1.0 - Math.abs(solution.launchPitchDeg - 45.0) / 45.0; // Prefer 45° launches
-        double scoreQuality = 1.0 - Math.min(solution.score, 1.0);
+        // Calculate confidence based on trajectory quality
+        double angleQuality = 1.0 - Math.abs(bestPitch - 45.0) / 45.0; // Prefer 45° launches
+        double scoreQuality = bestScore;
         output.confidence = (angleQuality * 0.3 + scoreQuality * 0.7);
         output.confidence = Math.max(0.0, Math.min(1.0, output.confidence));
         
-        // Calculate margin of error based on trajectory arc and physics uncertainties
-        // Factors: drag uncertainty, spin variation, entry angle
+        // Calculate margin of error based on trajectory characteristics
         double distanceToTargetForError = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        double dragErrorFactor = 0.02; // ±2% drag coefficient uncertainty
-        double spinErrorFactor = 0.05; // ±5% spin efficiency uncertainty
+        double dragErrorFactor = 0.02;
+        double spinErrorFactor = 0.05;
         output.marginOfError = distanceToTargetForError * (dragErrorFactor + spinErrorFactor * (config.spinRate / 300.0));
         
-        // Generate full trajectory equation (non-parabolic with all physics effects)
+        // Generate full trajectory equation
         output.trajectoryEquation = generateTrajectoryEquation(
-            config.robotPosition, new Vector3D(dx, dy, dz), bestSpeed, spin, solution);
+            config.robotPosition, new Vector3D(dx, dy, dz), bestSpeed, spin, 
+            new InverseSolver.SolutionResult(bestYaw, bestPitch, bestScore, bestResult));
         
         // Extract trajectory details
-        if (solution.trajectory != null) {
-            if (solution.trajectory.entryState != null) {
-                double vz = solution.trajectory.entryState.velocity.z;
-                double speedAtEntry = solution.trajectory.entryState.velocity.magnitude();
-                if (speedAtEntry > 0.1) {
-                    output.entryAngle = Math.abs(Math.toDegrees(Math.asin(-vz / speedAtEntry)));
-                }
+        if (bestResult.entryState != null) {
+            double vz = bestResult.entryState.velocity.z;
+            double speedAtEntry = bestResult.entryState.velocity.magnitude();
+            if (speedAtEntry > 0.1) {
+                output.entryAngle = Math.abs(Math.toDegrees(Math.asin(-vz / speedAtEntry)));
             }
-            
-            output.flightTime = solution.trajectory.getFlightTime();
-            output.apexHeight = solution.trajectory.getMaxHeight();
-            
-            // Generate trajectory description
-            double distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < 3.5) {
-                output.trajectory = "Close-range, high-arc shot";
-            } else if (distance < 6.0) {
-                output.trajectory = "Medium-range trajectory";
-            } else {
-                output.trajectory = "Long-range shot";
-            }
-            
-            if (Math.abs(dy) > 1.0) {
-                output.trajectory += ", significant lateral component";
-            }
+        }
+        
+        output.flightTime = bestResult.getFlightTime();
+        output.apexHeight = bestResult.getMaxHeight();
+        
+        // Generate trajectory description
+        double distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < 3.5) {
+            output.trajectory = "Close-range, high-arc shot";
+        } else if (distance < 6.0) {
+            output.trajectory = "Medium-range trajectory";
+        } else {
+            output.trajectory = "Long-range shot";
+        }
+        
+        if (Math.abs(dy) > 1.0) {
+            output.trajectory += ", significant lateral component";
         }
         
         return output;
