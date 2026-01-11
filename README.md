@@ -10,19 +10,24 @@ This library is designed to integrate seamlessly with **AdvantageKit logging**, 
 
 - 🚀 **[QUICKSTART.md](QUICKSTART.md)** - Get running in 5 minutes
 - 📊 **[ADVANTAGEKIT_TUNING.md](ADVANTAGEKIT_TUNING.md)** - Tune from logs
+- 🎯 **[SPIN_SHOT_SIMULATOR.md](SPIN_SHOT_SIMULATOR.md)** - Hooded-turret shot analysis (NEW)
+- 🌀 **[SPIN_PHYSICS.md](SPIN_PHYSICS.md)** - Spin modeling guide
 - 📖 **[WPILIB_INTEGRATION.md](WPILIB_INTEGRATION.md)** - Full integration guide
 
 ## Features
 
-- ✅ Full physics: gravity, drag, Magnus effect, collisions
+- ✅ Full physics: gravity, drag, Magnus effect, collisions, spin decay
 - ✅ Inverse solver: automatically computes launch angles
-- ✅ RK4 numerical integration
-- ✅ Shooter efficiency modeling
+- ✅ **SpinShotSimulator: exhaustive hooded-turret shot analysis (NEW)**
+- ✅ RK4 numerical integration with adaptive timestep
+- ✅ Shooter efficiency modeling with per-shot corrections
 - ✅ **Automatic AdvantageKit logging for easy tuning**
 - ✅ **Tune from robot logs - no manual testing needed!**
+- ✅ Incremental calibration and pre-seeded optimization
 - ✅ Calibration and learning system
 - ✅ Zero dependencies - works with any robot framework
 - ✅ Real-time safe and deterministic
+- ✅ Runtime-configurable parameters
 
 ## Quick Start
 
@@ -89,6 +94,8 @@ trajectory.calibrate();  // Uses logged shot data
 ## Documentation
 
 - **[ADVANTAGEKIT_TUNING.md](ADVANTAGEKIT_TUNING.md)** - Complete guide for tuning from AdvantageKit logs ⭐
+- **[SPIN_SHOT_SIMULATOR.md](SPIN_SHOT_SIMULATOR.md)** - Software-only hooded-turret shot analysis ⭐ (NEW)
+- **[SPIN_PHYSICS.md](SPIN_PHYSICS.md)** - Comprehensive spin modeling guide
 - **[WPILIB_INTEGRATION.md](WPILIB_INTEGRATION.md)** - Full WPILib integration guide
 - **[INTEGRATION.md](INTEGRATION.md)** - General usage and API reference
 - **[examples/](examples/)** - Complete working examples
