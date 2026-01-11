@@ -10,7 +10,8 @@ This library is designed to integrate seamlessly with **AdvantageKit logging**, 
 
 - 🚀 **[QUICKSTART.md](QUICKSTART.md)** - Get running in 5 minutes
 - 📊 **[ADVANTAGEKIT_TUNING.md](ADVANTAGEKIT_TUNING.md)** - Tune from logs
-- 🎯 **[SPIN_SHOT_SIMULATOR.md](SPIN_SHOT_SIMULATOR.md)** - Hooded-turret shot analysis (NEW)
+- 🎯 **[SPIN_SHOT_SIMULATOR.md](SPIN_SHOT_SIMULATOR.md)** - Hooded-turret shot analysis
+- 🎮 **[SHOOTER_AIMING_CONTROLLER.md](SHOOTER_AIMING_CONTROLLER.md)** - High-level turret/hood control (NEW)
 - 🌀 **[SPIN_PHYSICS.md](SPIN_PHYSICS.md)** - Spin modeling guide
 - 📖 **[WPILIB_INTEGRATION.md](WPILIB_INTEGRATION.md)** - Full integration guide
 
@@ -18,7 +19,8 @@ This library is designed to integrate seamlessly with **AdvantageKit logging**, 
 
 - ✅ Full physics: gravity, drag, Magnus effect, collisions, spin decay
 - ✅ Inverse solver: automatically computes launch angles
-- ✅ **SpinShotSimulator: exhaustive hooded-turret shot analysis (NEW)**
+- ✅ **SpinShotSimulator: exhaustive hooded-turret shot analysis**
+- ✅ **ShooterAimingController: high-level turret/hood control with field-relative coordinates (NEW)**
 - ✅ RK4 numerical integration with adaptive timestep
 - ✅ Shooter efficiency modeling with per-shot corrections
 - ✅ **Automatic AdvantageKit logging for easy tuning**
