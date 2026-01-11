@@ -50,19 +50,17 @@ public class PhysicsModel {
             dragAccel = new Vector3D(0, 0, 0);
         }
         
-        // Magnus force: F_magnus = Cm × |ω| × |v| × (ω × v)
-        // Enhanced: Magnitude scales with both spin rate and velocity
-        // This creates lift perpendicular to both velocity and spin
-        double spinMagnitude = spin.magnitude();
+        // Magnus force: F_magnus = Cm × (ω × v)
+        // The cross product magnitude already contains |ω| × |v| × sin(θ)
+        // The coefficient Cm accounts for aerodynamic effects
         double velocityMagnitude = Math.sqrt(speedSquared);
         Vector3D magnusForce;
         
-        if (spinMagnitude > 1e-6 && velocityMagnitude > 1e-6) {
+        if (spin.magnitude() > 1e-6 && velocityMagnitude > 1e-6) {
             // Magnus force proportional to spin × velocity for foam balls
             // Coefficient is empirically determined and includes aerodynamic effects
-            Vector3D magnusDirection = spin.cross(velocity);
-            double magnusScaling = params.magnusCoefficient * spinMagnitude * velocityMagnitude;
-            magnusForce = magnusDirection.scale(magnusScaling);
+            Vector3D spinCrossVelocity = spin.cross(velocity);
+            magnusForce = spinCrossVelocity.scale(params.magnusCoefficient);
         } else {
             magnusForce = new Vector3D(0, 0, 0);
         }
