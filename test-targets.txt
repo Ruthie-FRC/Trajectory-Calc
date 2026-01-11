@@ -263,3 +263,192 @@ ROBOT_XY:              0.0, 5.0
 CURRENT_TURRET_DEGREE: 270
 CURRENT_HOOD_DEGREE:   0
 ---
+
+
+# ========================================
+# ADDITIONAL COMPREHENSIVE TEST SCENARIOS
+# ========================================
+
+# Scenario 31: Very close range (0.8m) - extreme steep angle needed
+ROBOT_XY:              0.8, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 32: Medium-close range with high turret offset (2.2m)
+ROBOT_XY:              2.2, 0.0
+CURRENT_TURRET_DEGREE: 45
+CURRENT_HOOD_DEGREE:   5
+---
+
+# Scenario 33: Perfect 45° diagonal approach (3.5m each axis)
+ROBOT_XY:              3.5, 3.5
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   15
+---
+
+# Scenario 34: Long range diagonal (6m, 6m)
+ROBOT_XY:              6.0, 6.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   20
+---
+
+# Scenario 35: Extreme lateral shot (0.5m forward, 4m to side)
+ROBOT_XY:              0.5, 4.0
+CURRENT_TURRET_DEGREE: 180
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 36: Behind-side angle (back 2m, side 3m)
+ROBOT_XY:              -2.0, 3.0
+CURRENT_TURRET_DEGREE: 90
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 37: Medium range with extreme turret misalignment (5m)
+ROBOT_XY:              5.0, 0.0
+CURRENT_TURRET_DEGREE: 270
+CURRENT_HOOD_DEGREE:   5
+---
+
+# Scenario 38: Close range high-arc lob shot (2.5m)
+ROBOT_XY:              2.5, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   45
+---
+
+# Scenario 39: Medium-long range flat trajectory (7m)
+ROBOT_XY:              7.0, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   15
+---
+
+# Scenario 40: Corner pocket shot (4m, 2.5m)
+ROBOT_XY:              4.0, 2.5
+CURRENT_TURRET_DEGREE: 30
+CURRENT_HOOD_DEGREE:   8
+---
+
+# Scenario 41: Reverse corner (2.5m, 4m)
+ROBOT_XY:              2.5, 4.0
+CURRENT_TURRET_DEGREE: 60
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 42: Nearly perpendicular shot (0.3m, 5m)
+ROBOT_XY:              0.3, 5.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 43: Tight angle shot (1.5m, 3m)
+ROBOT_XY:              1.5, 3.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   10
+---
+
+# Scenario 44: Medium diagonal with pre-aim (5m, 4m)
+ROBOT_XY:              5.0, 4.0
+CURRENT_TURRET_DEGREE: 320
+CURRENT_HOOD_DEGREE:   18
+---
+
+# Scenario 45: High speed requirement test (9m straight)
+ROBOT_XY:              9.0, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+LAUNCH_PARAMS:         16.0, 220.0
+---
+
+# Scenario 46: Variable spin test - low spin (3.5m)
+ROBOT_XY:              3.5, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   5
+LAUNCH_PARAMS:         12.0, 80.0
+---
+
+# Scenario 47: Variable spin test - high spin (3.5m)
+ROBOT_XY:              3.5, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   5
+LAUNCH_PARAMS:         12.0, 350.0
+---
+
+# Scenario 48: Wide lateral offset (3m, 6m)
+ROBOT_XY:              3.0, 6.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   12
+---
+
+# Scenario 49: Back-corner approach (-1m, 4m)
+ROBOT_XY:              -1.0, 4.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 50: Maximum practical range test (12m)
+ROBOT_XY:              12.0, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 51: High diagonal (8m, 4m)
+ROBOT_XY:              8.0, 4.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   25
+---
+
+# Scenario 52: Reverse high diagonal (4m, 8m)
+ROBOT_XY:              4.0, 8.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   20
+---
+
+# Scenario 53: Close-medium range test (2.8m)
+ROBOT_XY:              2.8, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 54: Equal axes medium (4.5m, 4.5m)
+ROBOT_XY:              4.5, 4.5
+CURRENT_TURRET_DEGREE: 45
+CURRENT_HOOD_DEGREE:   15
+---
+
+# Scenario 55: Narrow angle side shot (6m, 1m)
+ROBOT_XY:              6.0, 1.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   10
+---
+
+# Scenario 56: Narrow angle reverse (1m, 6m)
+ROBOT_XY:              1.0, 6.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   8
+---
+
+# Scenario 57: Off-center medium (3.8m, 2.2m)
+ROBOT_XY:              3.8, 2.2
+CURRENT_TURRET_DEGREE: 20
+CURRENT_HOOD_DEGREE:   10
+---
+
+# Scenario 58: Precision test (4.2m, 0.0m)
+ROBOT_XY:              4.2, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 59: High-medium range (7.5m)
+ROBOT_XY:              7.5, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   20
+---
+
+# Scenario 60: Final comprehensive test (5.5m, 2.5m)
+ROBOT_XY:              5.5, 2.5
+CURRENT_TURRET_DEGREE: 15
+CURRENT_HOOD_DEGREE:   12
+---
+

@@ -172,7 +172,18 @@ public class TurretTrajectoryTester {
         
         // First, try to find ANY trajectory that hits by comprehensive search
         // Search space: speeds from reasonable minimum to max, pitches around geometric estimate
-        double minSpeed = Math.max(MIN_SPEED_FLOOR, distanceToTarget * MIN_SPEED_FACTOR);
+        // For very close shots, use lower minimum speed; for long shots, use higher minimum
+        double minSpeed;
+        if (distanceToTarget < 2.0) {
+            // Very close shots need lower speeds to avoid overshooting
+            minSpeed = Math.max(5.0, distanceToTarget * 3.0);
+        } else if (distanceToTarget > 7.0) {
+            // Long shots need higher speeds
+            minSpeed = Math.max(MIN_SPEED_FLOOR, distanceToTarget * 1.5);
+        } else {
+            // Normal range
+            minSpeed = Math.max(MIN_SPEED_FLOOR, distanceToTarget * MIN_SPEED_FACTOR);
+        }
         minSpeed = Math.min(minSpeed, maxSpeed);
         
         TrajectorySimulator.TrajectoryResult bestResult = null;
@@ -181,29 +192,32 @@ public class TurretTrajectoryTester {
         double bestPitch = geometricPitch;
         double bestScore = -Double.MAX_VALUE;
         
-        // Comprehensive search: try many combinations to find hits
-        // Speed range: min to max in reasonable steps
-        int speedSteps = 15;
-        double speedStep = (maxSpeed - minSpeed) / speedSteps;
+        // Two-phase comprehensive search for 100% success rate
+        // Phase 1: Coarse grid search to find promising regions
+        // Phase 2: Fine search around best candidates
         
-        // Pitch range: geometric estimate ±20° to handle various trajectories
-        double[] pitchOffsets = {0, -5, 5, -10, 10, -15, 15, -20, 20, -3, 3, -7, 7, -12, 12, -17, 17};
+        // Phase 1: Coarse search
+        int coarseSpeedSteps = 10;
+        double coarseSpeedStep = (maxSpeed - minSpeed) / coarseSpeedSteps;
         
-        // Yaw range: target direction ±10° to handle slight variations
-        double[] yawOffsets = {0, -3, 3, -6, 6, -9, 9, -2, 2, -5, 5};
+        // Coarse pitch offsets: wider spacing
+        double[] coarsePitchOffsets = {0, -10, 10, -20, 20, -30, 30, -5, 5, -15, 15, -25, 25};
         
-        // Search for hits
-        for (int s = 0; s <= speedSteps; s++) {
-            double testSpeed = minSpeed + s * speedStep;
+        // Coarse yaw offsets: wider spacing
+        double[] coarseYawOffsets = {0, -6, 6, -12, 12, -18, 18, -3, 3, -9, 9, -15, 15};
+        
+        // Coarse search for hits
+        for (int s = 0; s <= coarseSpeedSteps; s++) {
+            double testSpeed = minSpeed + s * coarseSpeedStep;
             if (testSpeed > maxSpeed) continue;
             
-            for (double pitchOffset : pitchOffsets) {
+            for (double pitchOffset : coarsePitchOffsets) {
                 double testPitch = geometricPitch + pitchOffset;
                 
-                // Limit pitch to reasonable range [10°, 70°]
-                if (testPitch < 10.0 || testPitch > 70.0) continue;
+                // Expanded pitch range to handle extreme cases
+                if (testPitch < 5.0 || testPitch > 75.0) continue;
                 
-                for (double yawOffset : yawOffsets) {
+                for (double yawOffset : coarseYawOffsets) {
                     double testYaw = targetYaw + yawOffset;
                     
                     // Simulate this trajectory
@@ -229,11 +243,44 @@ public class TurretTrajectoryTester {
                 }
                 
                 // Early exit if we found an excellent shot
-                if (bestScore > 0.6) break;
+                if (bestScore > 0.7) break;
             }
             
             // Early exit if we found an excellent shot
-            if (bestScore > 0.6) break;
+            if (bestScore > 0.7) break;
+        }
+        
+        // Phase 2: Fine search around best solution if we found one but it's not great
+        if (bestResult != null && bestResult.hitTarget && bestScore < 0.7) {
+            // Fine-tune around the best solution found
+            double fineSpeedStep = Math.max(0.5, (maxSpeed - minSpeed) / 40.0);
+            double[] finePitchOffsets = {0, -2, 2, -4, 4, -1, 1, -3, 3, -5, 5};
+            double[] fineYawOffsets = {0, -2, 2, -4, 4, -1, 1, -3, 3};
+            
+            for (double speedOffset = -2 * fineSpeedStep; speedOffset <= 2 * fineSpeedStep; speedOffset += fineSpeedStep) {
+                double testSpeed = bestSpeed + speedOffset;
+                if (testSpeed < minSpeed || testSpeed > maxSpeed) continue;
+                
+                for (double pitchOffset : finePitchOffsets) {
+                    double testPitch = bestPitch + pitchOffset;
+                    if (testPitch < 5.0 || testPitch > 75.0) continue;
+                    
+                    for (double yawOffset : fineYawOffsets) {
+                        double testYaw = bestYaw + yawOffset;
+                        
+                        TrajectorySimulator.TrajectoryResult result = trajSimulator.simulateWithShooterModel(
+                            config.robotPosition, testSpeed, testYaw, testPitch, spin);
+                        
+                        if (result.hitTarget && result.entryScore > bestScore) {
+                            bestScore = result.entryScore;
+                            bestResult = result;
+                            bestSpeed = testSpeed;
+                            bestYaw = testYaw;
+                            bestPitch = testPitch;
+                        }
+                    }
+                }
+            }
         }
         
         // If we didn't find a hit, return no solution
