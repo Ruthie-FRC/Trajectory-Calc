@@ -1,0 +1,28 @@
+# Target Coordinates for Trajectory Testing
+# Format: x,y,z (meters from robot to target)
+# Lines starting with # are comments
+
+# Close range shots
+2.0,0.0,2.5
+3.0,0.5,2.5
+3.5,-0.3,2.5
+
+# Medium range shots
+4.0,0.0,2.5
+5.0,1.0,2.5
+5.5,-0.5,2.5
+
+# Long range shots
+6.0,0.0,2.5
+7.0,1.5,2.5
+7.5,-1.0,2.5
+
+# Angled shots
+4.0,2.0,2.5
+5.0,-2.5,2.5
+6.0,3.0,2.5
+
+# Edge cases
+2.5,0.0,2.8
+8.0,0.0,2.5
+5.0,0.0,3.0
