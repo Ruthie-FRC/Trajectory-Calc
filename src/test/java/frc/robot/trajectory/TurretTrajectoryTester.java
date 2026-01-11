@@ -190,7 +190,12 @@ public class TurretTrajectoryTester {
     
     /**
      * Read test configurations from file.
-     * Format: robotX,robotY,robotZ,targetX,targetY,targetZ,yawOffset,pitchOffset[,speed,spin]
+     * New format uses labeled sections:
+     *   ROBOT_POSITION: x, y, z
+     *   TARGET_POSITION: x, y, z
+     *   TURRET_OFFSET: yaw, pitch
+     *   LAUNCH_PARAMS: speed, spin (optional)
+     *   ---
      */
     public List<TestConfig> readConfigsFromFile(String filename) throws IOException {
         List<TestConfig> configs = new ArrayList<>();
@@ -199,45 +204,85 @@ public class TurretTrajectoryTester {
             String line;
             int lineNum = 0;
             
+            Vector3D robotPos = null;
+            Vector3D targetPos = null;
+            Double yawOffset = null;
+            Double pitchOffset = null;
+            Double speed = null;
+            Double spin = null;
+            
             while ((line = reader.readLine()) != null) {
                 lineNum++;
                 line = line.trim();
                 
+                // Skip empty lines and comments
                 if (line.isEmpty() || line.startsWith("#")) {
                     continue;
                 }
                 
-                try {
-                    String[] parts = line.split(",");
-                    if (parts.length < 8) {
+                // Check for section separator
+                if (line.equals("---")) {
+                    // Complete scenario - validate and add
+                    if (robotPos != null && targetPos != null && 
+                        yawOffset != null && pitchOffset != null) {
+                        
+                        double finalSpeed = (speed != null) ? speed : defaultSpeed;
+                        double finalSpin = (spin != null) ? spin : defaultSpinRate;
+                        
+                        configs.add(new TestConfig(
+                            robotPos, targetPos, yawOffset, pitchOffset, finalSpeed, finalSpin));
+                    } else {
                         System.err.println("Line " + lineNum + 
-                            ": Expected at least 8 values, got " + parts.length);
-                        continue;
+                            ": Incomplete scenario (missing required fields)");
                     }
                     
-                    Vector3D robotPos = new Vector3D(
-                        Double.parseDouble(parts[0].trim()),
-                        Double.parseDouble(parts[1].trim()),
-                        Double.parseDouble(parts[2].trim())
-                    );
-                    
-                    Vector3D targetPos = new Vector3D(
-                        Double.parseDouble(parts[3].trim()),
-                        Double.parseDouble(parts[4].trim()),
-                        Double.parseDouble(parts[5].trim())
-                    );
-                    
-                    double yawOffset = Double.parseDouble(parts[6].trim());
-                    double pitchOffset = Double.parseDouble(parts[7].trim());
-                    
-                    double speed = parts.length > 8 ? 
-                        Double.parseDouble(parts[8].trim()) : defaultSpeed;
-                    double spin = parts.length > 9 ? 
-                        Double.parseDouble(parts[9].trim()) : defaultSpinRate;
-                    
-                    configs.add(new TestConfig(
-                        robotPos, targetPos, yawOffset, pitchOffset, speed, spin));
-                    
+                    // Reset for next scenario
+                    robotPos = null;
+                    targetPos = null;
+                    yawOffset = null;
+                    pitchOffset = null;
+                    speed = null;
+                    spin = null;
+                    continue;
+                }
+                
+                // Parse labeled lines
+                try {
+                    if (line.startsWith("ROBOT_POSITION:")) {
+                        String values = line.substring("ROBOT_POSITION:".length()).trim();
+                        String[] parts = values.split(",");
+                        if (parts.length == 3) {
+                            robotPos = new Vector3D(
+                                Double.parseDouble(parts[0].trim()),
+                                Double.parseDouble(parts[1].trim()),
+                                Double.parseDouble(parts[2].trim())
+                            );
+                        }
+                    } else if (line.startsWith("TARGET_POSITION:")) {
+                        String values = line.substring("TARGET_POSITION:".length()).trim();
+                        String[] parts = values.split(",");
+                        if (parts.length == 3) {
+                            targetPos = new Vector3D(
+                                Double.parseDouble(parts[0].trim()),
+                                Double.parseDouble(parts[1].trim()),
+                                Double.parseDouble(parts[2].trim())
+                            );
+                        }
+                    } else if (line.startsWith("TURRET_OFFSET:")) {
+                        String values = line.substring("TURRET_OFFSET:".length()).trim();
+                        String[] parts = values.split(",");
+                        if (parts.length == 2) {
+                            yawOffset = Double.parseDouble(parts[0].trim());
+                            pitchOffset = Double.parseDouble(parts[1].trim());
+                        }
+                    } else if (line.startsWith("LAUNCH_PARAMS:")) {
+                        String values = line.substring("LAUNCH_PARAMS:".length()).trim();
+                        String[] parts = values.split(",");
+                        if (parts.length == 2) {
+                            speed = Double.parseDouble(parts[0].trim());
+                            spin = Double.parseDouble(parts[1].trim());
+                        }
+                    }
                 } catch (NumberFormatException e) {
                     System.err.println("Line " + lineNum + 
                         ": Invalid number format - " + e.getMessage());
