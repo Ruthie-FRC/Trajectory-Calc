@@ -134,4 +134,12 @@ public class HubGeometry {
     public double getOpeningHeight() {
         return openingHeight;
     }
+    
+    public double getOpeningRadius() {
+        return openingFlatToFlat / 2.0;
+    }
+    
+    public double getOpeningFlatToFlat() {
+        return openingFlatToFlat;
+    }
 }

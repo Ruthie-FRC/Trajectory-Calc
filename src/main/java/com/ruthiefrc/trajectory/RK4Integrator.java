@@ -3,14 +3,17 @@ package com.ruthiefrc.trajectory;
 /**
  * Fourth-order Runge-Kutta (RK4) numerical integrator.
  * Provides accurate integration of the projectile's equations of motion.
+ * Supports adaptive timestep for improved precision near collisions.
  */
 public class RK4Integrator {
-    private final PhysicsModel physicsModel;
-    private final double timestep;
+    protected final PhysicsModel physicsModel;
+    protected final double timestep;
+    private final boolean adaptiveTimestep;
+    private final double fineTimestep;
+    private final double collisionProximityThreshold;
     
     public RK4Integrator(PhysicsModel physicsModel, double timestep) {
-        this.physicsModel = physicsModel;
-        this.timestep = timestep;
+        this(physicsModel, timestep, false, PhysicsConstants.ADAPTIVE_TIMESTEP_NEAR_COLLISION);
     }
     
     public RK4Integrator(PhysicsModel physicsModel) {
@@ -18,12 +21,58 @@ public class RK4Integrator {
     }
     
     /**
+     * Create integrator with adaptive timestep support.
+     */
+    public RK4Integrator(PhysicsModel physicsModel, double normalTimestep, 
+                         boolean adaptiveTimestep, double fineTimestep) {
+        this.physicsModel = physicsModel;
+        this.timestep = normalTimestep;
+        this.adaptiveTimestep = adaptiveTimestep;
+        this.fineTimestep = fineTimestep;
+        this.collisionProximityThreshold = physicsModel.getProjectile().radius * 3.0;
+    }
+    
+    /**
+     * Create adaptive RK4 integrator.
+     */
+    public static RK4Integrator createAdaptive(PhysicsModel physicsModel) {
+        return new RK4Integrator(physicsModel, 
+            PhysicsConstants.DEFAULT_TIMESTEP, 
+            true, 
+            PhysicsConstants.ADAPTIVE_TIMESTEP_NEAR_COLLISION);
+    }
+    
+    /**
      * Perform one RK4 integration step.
      * Returns the new state after time dt.
      */
     public ProjectileState step(ProjectileState state) {
-        double dt = timestep;
+        double dt = adaptiveTimestep ? selectTimestep(state) : timestep;
+        return stepWithTimestep(state, dt);
+    }
+    
+    /**
+     * Select appropriate timestep based on proximity to surfaces.
+     */
+    protected double selectTimestep(ProjectileState state) {
+        if (!adaptiveTimestep) {
+            return timestep;
+        }
         
+        // Check distance to HUB opening plane
+        double distToPlane = Math.abs(state.position.z - PhysicsConstants.DEFAULT_HUB_OPENING_HEIGHT);
+        
+        if (distToPlane < collisionProximityThreshold) {
+            return fineTimestep;
+        }
+        
+        return timestep;
+    }
+    
+    /**
+     * Perform RK4 step with specified timestep.
+     */
+    protected ProjectileState stepWithTimestep(ProjectileState state, double dt) {
         // k1 = f(t, y)
         StateDerivative k1 = physicsModel.computeDerivative(state);
         
@@ -57,7 +106,7 @@ public class RK4Integrator {
     /**
      * Apply a derivative to a state for a given time step.
      */
-    private ProjectileState applyDerivative(ProjectileState state, StateDerivative derivative, double dt) {
+    protected ProjectileState applyDerivative(ProjectileState state, StateDerivative derivative, double dt) {
         Vector3D newPosition = state.position.add(derivative.positionDerivative.scale(dt));
         Vector3D newVelocity = state.velocity.add(derivative.velocityDerivative.scale(dt));
         Vector3D newSpin = state.spin.add(derivative.spinDerivative.scale(dt));
@@ -66,5 +115,9 @@ public class RK4Integrator {
     
     public double getTimestep() {
         return timestep;
+    }
+    
+    public boolean isAdaptive() {
+        return adaptiveTimestep;
     }
 }

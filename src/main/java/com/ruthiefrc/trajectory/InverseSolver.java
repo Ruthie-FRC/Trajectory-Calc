@@ -131,6 +131,7 @@ public class InverseSolver {
     /**
      * Evaluate the quality of a solution.
      * Higher score is better.
+     * Enhanced with bounce-out risk and rim proximity penalties.
      */
     private double evaluateSolution(TrajectorySimulator.TrajectoryResult result, Vector3D targetCenter) {
         if (!result.hitTarget) {
@@ -144,8 +145,86 @@ public class InverseSolver {
             return -100.0; // Large penalty for no entry state
         }
         
-        // Hit - return entry score
-        return result.entryScore;
+        // Base score from entry quality
+        double score = result.entryScore;
+        
+        // Bounce-out risk penalty (NEW)
+        double bounceRisk = calculateBounceOutRisk(result);
+        if (bounceRisk > PhysicsConstants.BOUNCE_OUT_RISK_THRESHOLD) {
+            score -= bounceRisk * 2.0; // Heavy penalty for high bounce risk
+        }
+        
+        // Rim proximity penalty (NEW)
+        double rimDistance = calculateRimProximity(result);
+        if (rimDistance < PhysicsConstants.RIM_DANGER_ZONE) {
+            score -= (PhysicsConstants.RIM_DANGER_ZONE - rimDistance) * 5.0; // Penalty for rim skimming
+        }
+        
+        // Lateral velocity penalty (NEW)
+        if (result.entryState != null) {
+            double lateralSpeed = Math.sqrt(
+                result.entryState.velocity.x * result.entryState.velocity.x +
+                result.entryState.velocity.y * result.entryState.velocity.y
+            );
+            if (lateralSpeed > PhysicsConstants.DEFAULT_MAX_LATERAL_VELOCITY) {
+                score -= (lateralSpeed - PhysicsConstants.DEFAULT_MAX_LATERAL_VELOCITY) * 0.5;
+            }
+        }
+        
+        return score;
+    }
+    
+    /**
+     * Calculate bounce-out risk score (0-1, higher is more risk).
+     * Based on vertical velocity and entry angle.
+     */
+    private double calculateBounceOutRisk(TrajectorySimulator.TrajectoryResult result) {
+        if (result.entryState == null) {
+            return 1.0; // Maximum risk if no entry state
+        }
+        
+        ProjectileState entry = result.entryState;
+        
+        // Vertical velocity component (prefer more downward)
+        double vzRisk = 0.0;
+        if (entry.velocity.z > -1.0) { // Less than 1 m/s downward is risky
+            vzRisk = (1.0 + entry.velocity.z) / 2.0; // Normalize to 0-1
+        }
+        
+        // Entry angle risk (prefer steep angles)
+        double speed = entry.velocity.magnitude();
+        double entryAngle = 0.0;
+        if (speed > 0.1) {
+            entryAngle = Math.abs(Math.toDegrees(Math.asin(-entry.velocity.z / speed)));
+        }
+        double angleRisk = (90.0 - entryAngle) / 90.0; // Shallow angles have high risk
+        
+        // Combined risk (weighted average)
+        return vzRisk * 0.6 + angleRisk * 0.4;
+    }
+    
+    /**
+     * Calculate minimum distance to rim/opening edge.
+     * Returns distance in meters.
+     */
+    private double calculateRimProximity(TrajectorySimulator.TrajectoryResult result) {
+        if (result.entryState == null) {
+            return 0.0; // Maximum proximity (worst case)
+        }
+        
+        Vector3D entry = result.entryState.position;
+        Vector3D center = hubGeometry.getCenter();
+        
+        // Distance from center in XY plane
+        double dx = entry.x - center.x;
+        double dy = entry.y - center.y;
+        double distFromCenter = Math.sqrt(dx * dx + dy * dy);
+        
+        // Distance to rim edge
+        double rimRadius = hubGeometry.getOpeningRadius();
+        double distToRim = rimRadius - distFromCenter;
+        
+        return Math.max(0, distToRim);
     }
     
     /**
