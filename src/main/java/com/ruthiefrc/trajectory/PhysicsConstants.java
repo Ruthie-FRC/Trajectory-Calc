@@ -27,6 +27,12 @@ public class PhysicsConstants {
     public static final double DEFAULT_SPEED_EFFICIENCY = 0.95; // launch speed efficiency
     public static final double DEFAULT_SPIN_EFFICIENCY = 0.90; // spin efficiency
     
+    // Spin physics for foam balls (NEW)
+    public static final double DEFAULT_SPIN_DECAY_RATE = 0.05; // per second for foam balls
+    public static final double SPIN_BOUNCE_REDUCTION_FACTOR = 0.7; // spin reduction on rim/surface contact
+    public static final double SPIN_FRICTION_COUPLING = 0.15; // spin-to-tangential velocity coupling
+    public static final double MAX_SPIN_RATE = 500.0; // rad/s safety limit
+    
     // Parameter safety limits
     public static final double MIN_DRAG_COEFFICIENT = 0.1;
     public static final double MAX_DRAG_COEFFICIENT = 2.0;
@@ -40,6 +46,8 @@ public class PhysicsConstants {
     public static final double MAX_RESTITUTION = 1.0;
     public static final double MIN_FRICTION = 0.0;
     public static final double MAX_FRICTION = 1.0;
+    public static final double MIN_SPIN_DECAY_RATE = 0.0;
+    public static final double MAX_SPIN_DECAY_RATE = 0.5; // per second
     
     // HUB target geometry (default values, can be configured via HubGeometry)
     public static final double DEFAULT_HUB_FOOTPRINT_SIZE = 1.19; // meters (square footprint)

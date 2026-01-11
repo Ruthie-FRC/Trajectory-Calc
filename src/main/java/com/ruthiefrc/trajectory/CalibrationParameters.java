@@ -13,7 +13,10 @@ public class CalibrationParameters {
     public final double restitutionCoefficient;
     public final double frictionCoefficient;
     
-    // Per-shot correction factors (NEW)
+    // Spin physics parameters (NEW)
+    public final double spinDecayRate; // per second for foam ball spin decay
+    
+    // Per-shot correction factors
     public final double speedCorrectionFactor; // multiplicative correction per shot
     public final double spinCorrectionFactor; // multiplicative correction per shot
     
@@ -27,6 +30,7 @@ public class CalibrationParameters {
              PhysicsConstants.DEFAULT_SPIN_EFFICIENCY,
              PhysicsConstants.DEFAULT_RESTITUTION_COEFFICIENT,
              PhysicsConstants.DEFAULT_FRICTION_COEFFICIENT,
+             PhysicsConstants.DEFAULT_SPIN_DECAY_RATE,
              1.0, // no speed correction by default
              1.0); // no spin correction by default
     }
@@ -38,15 +42,17 @@ public class CalibrationParameters {
                                   double speedEfficiency, double spinEfficiency,
                                   double restitutionCoefficient, double frictionCoefficient) {
         this(dragCoefficient, magnusCoefficient, speedEfficiency, spinEfficiency,
-             restitutionCoefficient, frictionCoefficient, 1.0, 1.0);
+             restitutionCoefficient, frictionCoefficient, 
+             PhysicsConstants.DEFAULT_SPIN_DECAY_RATE, 1.0, 1.0);
     }
     
     /**
-     * Create calibration parameters with custom values including correction factors.
+     * Create calibration parameters with custom values including spin decay and correction factors.
      */
     public CalibrationParameters(double dragCoefficient, double magnusCoefficient,
                                   double speedEfficiency, double spinEfficiency,
                                   double restitutionCoefficient, double frictionCoefficient,
+                                  double spinDecayRate,
                                   double speedCorrectionFactor, double spinCorrectionFactor) {
         // Validate and clamp parameters to safety limits
         this.dragCoefficient = clamp(dragCoefficient, 
@@ -61,6 +67,8 @@ public class CalibrationParameters {
             PhysicsConstants.MIN_RESTITUTION, PhysicsConstants.MAX_RESTITUTION);
         this.frictionCoefficient = clamp(frictionCoefficient,
             PhysicsConstants.MIN_FRICTION, PhysicsConstants.MAX_FRICTION);
+        this.spinDecayRate = clamp(spinDecayRate,
+            PhysicsConstants.MIN_SPIN_DECAY_RATE, PhysicsConstants.MAX_SPIN_DECAY_RATE);
         this.speedCorrectionFactor = clamp(speedCorrectionFactor, 0.8, 1.2);
         this.spinCorrectionFactor = clamp(spinCorrectionFactor, 0.8, 1.2);
     }
@@ -71,49 +79,55 @@ public class CalibrationParameters {
     
     public CalibrationParameters withDragCoefficient(double value) {
         return new CalibrationParameters(value, magnusCoefficient, speedEfficiency,
-            spinEfficiency, restitutionCoefficient, frictionCoefficient,
+            spinEfficiency, restitutionCoefficient, frictionCoefficient, spinDecayRate,
             speedCorrectionFactor, spinCorrectionFactor);
     }
     
     public CalibrationParameters withMagnusCoefficient(double value) {
         return new CalibrationParameters(dragCoefficient, value, speedEfficiency,
-            spinEfficiency, restitutionCoefficient, frictionCoefficient,
+            spinEfficiency, restitutionCoefficient, frictionCoefficient, spinDecayRate,
             speedCorrectionFactor, spinCorrectionFactor);
     }
     
     public CalibrationParameters withSpeedEfficiency(double value) {
         return new CalibrationParameters(dragCoefficient, magnusCoefficient, value,
-            spinEfficiency, restitutionCoefficient, frictionCoefficient,
+            spinEfficiency, restitutionCoefficient, frictionCoefficient, spinDecayRate,
             speedCorrectionFactor, spinCorrectionFactor);
     }
     
     public CalibrationParameters withSpinEfficiency(double value) {
         return new CalibrationParameters(dragCoefficient, magnusCoefficient, speedEfficiency,
-            value, restitutionCoefficient, frictionCoefficient,
+            value, restitutionCoefficient, frictionCoefficient, spinDecayRate,
             speedCorrectionFactor, spinCorrectionFactor);
     }
     
     public CalibrationParameters withRestitutionCoefficient(double value) {
         return new CalibrationParameters(dragCoefficient, magnusCoefficient, speedEfficiency,
-            spinEfficiency, value, frictionCoefficient,
+            spinEfficiency, value, frictionCoefficient, spinDecayRate,
             speedCorrectionFactor, spinCorrectionFactor);
     }
     
     public CalibrationParameters withFrictionCoefficient(double value) {
         return new CalibrationParameters(dragCoefficient, magnusCoefficient, speedEfficiency,
-            spinEfficiency, restitutionCoefficient, value,
+            spinEfficiency, restitutionCoefficient, value, spinDecayRate,
+            speedCorrectionFactor, spinCorrectionFactor);
+    }
+    
+    public CalibrationParameters withSpinDecayRate(double value) {
+        return new CalibrationParameters(dragCoefficient, magnusCoefficient, speedEfficiency,
+            spinEfficiency, restitutionCoefficient, frictionCoefficient, value,
             speedCorrectionFactor, spinCorrectionFactor);
     }
     
     public CalibrationParameters withSpeedCorrectionFactor(double value) {
         return new CalibrationParameters(dragCoefficient, magnusCoefficient, speedEfficiency,
-            spinEfficiency, restitutionCoefficient, frictionCoefficient,
+            spinEfficiency, restitutionCoefficient, frictionCoefficient, spinDecayRate,
             value, spinCorrectionFactor);
     }
     
     public CalibrationParameters withSpinCorrectionFactor(double value) {
         return new CalibrationParameters(dragCoefficient, magnusCoefficient, speedEfficiency,
-            spinEfficiency, restitutionCoefficient, frictionCoefficient,
+            spinEfficiency, restitutionCoefficient, frictionCoefficient, spinDecayRate,
             speedCorrectionFactor, value);
     }
     
@@ -131,9 +145,9 @@ public class CalibrationParameters {
     
     @Override
     public String toString() {
-        return String.format("CalibrationParameters[Cd=%.3f, Cm=%.6f, ηv=%.3f, ηω=%.3f, e=%.2f, μ=%.2f, Δv=%.3f, Δω=%.3f]",
+        return String.format("CalibrationParameters[Cd=%.3f, Cm=%.6f, ηv=%.3f, ηω=%.3f, e=%.2f, μ=%.2f, decay=%.3f, Δv=%.3f, Δω=%.3f]",
             dragCoefficient, magnusCoefficient, speedEfficiency, spinEfficiency,
-            restitutionCoefficient, frictionCoefficient, speedCorrectionFactor, spinCorrectionFactor);
+            restitutionCoefficient, frictionCoefficient, spinDecayRate, speedCorrectionFactor, spinCorrectionFactor);
     }
     
     @Override
@@ -147,6 +161,7 @@ public class CalibrationParameters {
                Double.compare(spinEfficiency, other.spinEfficiency) == 0 &&
                Double.compare(restitutionCoefficient, other.restitutionCoefficient) == 0 &&
                Double.compare(frictionCoefficient, other.frictionCoefficient) == 0 &&
+               Double.compare(spinDecayRate, other.spinDecayRate) == 0 &&
                Double.compare(speedCorrectionFactor, other.speedCorrectionFactor) == 0 &&
                Double.compare(spinCorrectionFactor, other.spinCorrectionFactor) == 0;
     }

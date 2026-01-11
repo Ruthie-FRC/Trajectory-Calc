@@ -45,7 +45,40 @@ public class ShooterController {
     }
     
     /**
+     * Calculate shooting parameters for a given robot position with full spin vector control.
+     * 
+     * @param robotX X position in meters
+     * @param robotY Y position in meters
+     * @param robotZ Z position (shooter height) in meters
+     * @param nominalSpeed Desired launch speed in m/s
+     * @param spinRate Spin rate in rad/s
+     * @param spinAxisX Spin axis X component (will be normalized)
+     * @param spinAxisY Spin axis Y component (will be normalized)
+     * @param spinAxisZ Spin axis Z component (will be normalized)
+     * @return Solution with launch angles and quality score
+     */
+    public InverseSolver.SolutionResult calculateShot(double robotX, double robotY, double robotZ,
+                                                       double nominalSpeed, double spinRate,
+                                                       double spinAxisX, double spinAxisY, double spinAxisZ) {
+        Vector3D robotPosition = new Vector3D(robotX, robotY, robotZ);
+        
+        // Normalize spin axis and apply spin rate
+        Vector3D spinAxis = new Vector3D(spinAxisX, spinAxisY, spinAxisZ);
+        double axisMagnitude = spinAxis.magnitude();
+        if (axisMagnitude > 1e-6) {
+            spinAxis = spinAxis.scale(1.0 / axisMagnitude);
+        } else {
+            // Default to backspin if no axis specified
+            spinAxis = new Vector3D(0, 1, 0);
+        }
+        Vector3D spin = spinAxis.scale(spinRate);
+        
+        return solver.solve(robotPosition, nominalSpeed, spin);
+    }
+    
+    /**
      * Calculate shooting parameters for a given robot position.
+     * Uses default backspin around Y-axis.
      * 
      * @param robotX X position in meters
      * @param robotY Y position in meters
@@ -56,8 +89,8 @@ public class ShooterController {
      */
     public InverseSolver.SolutionResult calculateShot(double robotX, double robotY, double robotZ,
                                                        double nominalSpeed, double spinRate) {
-        Vector3D robotPosition = new Vector3D(robotX, robotY, robotZ);
-        return solver.solve(robotPosition, nominalSpeed, spinRate);
+        // Default: backspin around Y-axis
+        return calculateShot(robotX, robotY, robotZ, nominalSpeed, spinRate, 0, 1, 0);
     }
     
     /**

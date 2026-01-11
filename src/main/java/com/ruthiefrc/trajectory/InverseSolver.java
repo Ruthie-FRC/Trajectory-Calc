@@ -64,12 +64,24 @@ public class InverseSolver {
     }
     
     /**
-     * Solve for launch parameters to hit the target.
+     * Solve for launch parameters to hit the target with full spin vector control.
      * Returns the optimal launch angles and expected hit quality.
      * Uses pre-seeded guesses from previous successful shots when available.
+     * 
+     * @param robotPosition Robot position (x, y, z)
+     * @param nominalLaunchSpeed Launch speed in m/s
+     * @param spin Full spin vector (rad/s) for Magnus effect control
+     * @return Solution with launch angles and quality score
      */
-    public SolutionResult solve(Vector3D robotPosition, double nominalLaunchSpeed, double spinRate) {
+    public SolutionResult solve(Vector3D robotPosition, double nominalLaunchSpeed, Vector3D spin) {
         Vector3D targetCenter = hubGeometry.getCenter();
+        
+        // Clamp spin rate to safety limits
+        double spinMagnitude = spin.magnitude();
+        if (spinMagnitude > PhysicsConstants.MAX_SPIN_RATE) {
+            spin = spin.scale(PhysicsConstants.MAX_SPIN_RATE / spinMagnitude);
+            spinMagnitude = PhysicsConstants.MAX_SPIN_RATE;
+        }
         
         // Try to get pre-seeded guess from cache or last successful shot
         double yawDeg, pitchDeg;
@@ -125,7 +137,7 @@ public class InverseSolver {
                     
                     // Simulate trajectory
                     TrajectorySimulator.TrajectoryResult result = simulator.simulateWithShooterModel(
-                        robotPosition, nominalLaunchSpeed, tryYaw, tryPitch, spinRate
+                        robotPosition, nominalLaunchSpeed, tryYaw, tryPitch, spin
                     );
                     
                     // Evaluate result
@@ -165,7 +177,7 @@ public class InverseSolver {
                 double tryPitch = bestPitch + delta[1];
                 
                 TrajectorySimulator.TrajectoryResult result = simulator.simulateWithShooterModel(
-                    robotPosition, nominalLaunchSpeed, tryYaw, tryPitch, spinRate
+                    robotPosition, nominalLaunchSpeed, tryYaw, tryPitch, spin
                 );
                 
                 double score = evaluateSolution(result, targetCenter);
@@ -200,6 +212,16 @@ public class InverseSolver {
         }
         
         return solution;
+    }
+    
+    /**
+     * Solve for launch parameters with spin rate (backward compatibility).
+     * Assumes backspin around Y-axis.
+     */
+    public SolutionResult solve(Vector3D robotPosition, double nominalLaunchSpeed, double spinRate) {
+        // Default to backspin around Y-axis
+        Vector3D spin = new Vector3D(0, spinRate, 0);
+        return solve(robotPosition, nominalLaunchSpeed, spin);
     }
     
     /**

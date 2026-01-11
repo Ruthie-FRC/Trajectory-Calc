@@ -69,18 +69,18 @@ public class TrajectorySimulator {
     }
     
     /**
-     * Simulate with shooter efficiency applied to initial conditions.
+     * Simulate with shooter efficiency applied to initial conditions and full spin vector control.
      */
     public TrajectoryResult simulateWithShooterModel(Vector3D robotPosition,
                                                       double launchSpeed,
                                                       double launchYawDeg,
                                                       double launchPitchDeg,
-                                                      double spinRate) {
+                                                      Vector3D spin) {
         CalibrationParameters params = physicsModel.getParameters();
         
         // Apply shooter efficiency
-        double actualSpeed = launchSpeed * params.speedEfficiency;
-        double actualSpin = spinRate * params.spinEfficiency;
+        double actualSpeed = launchSpeed * params.speedEfficiency * params.speedCorrectionFactor;
+        Vector3D actualSpin = spin.scale(params.spinEfficiency * params.spinCorrectionFactor);
         
         // Convert angles to radians
         double yaw = Math.toRadians(launchYawDeg);
@@ -92,12 +92,21 @@ public class TrajectorySimulator {
         double vz = actualSpeed * Math.sin(pitch);
         Vector3D velocity = new Vector3D(vx, vy, vz);
         
-        // Spin vector (assuming backspin for simplicity, aligned with velocity direction)
-        Vector3D spinAxis = new Vector3D(-Math.sin(pitch), 0, Math.cos(pitch)).normalize();
-        Vector3D spin = spinAxis.scale(actualSpin);
-        
-        ProjectileState initialState = new ProjectileState(robotPosition, velocity, spin, 0.0);
+        ProjectileState initialState = new ProjectileState(robotPosition, velocity, actualSpin, 0.0);
         return simulate(initialState);
+    }
+    
+    /**
+     * Simulate with shooter efficiency (backward compatibility - assumes backspin).
+     */
+    public TrajectoryResult simulateWithShooterModel(Vector3D robotPosition,
+                                                      double launchSpeed,
+                                                      double launchYawDeg,
+                                                      double launchPitchDeg,
+                                                      double spinRate) {
+        // Default: backspin around Y-axis
+        Vector3D spin = new Vector3D(0, spinRate, 0);
+        return simulateWithShooterModel(robotPosition, launchSpeed, launchYawDeg, launchPitchDeg, spin);
     }
     
     public HubGeometry getHubGeometry() {
