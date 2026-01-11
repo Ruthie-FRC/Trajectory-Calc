@@ -6,6 +6,12 @@ Production-grade inverse ballistic solver for FRC robot shooters. Calculate opti
 
 This library is designed to integrate seamlessly with **AdvantageKit logging**, making it easy to tune your shooter from logged match/practice data.
 
+## Quick Links
+
+- 🚀 **[QUICKSTART.md](QUICKSTART.md)** - Get running in 5 minutes
+- 📊 **[ADVANTAGEKIT_TUNING.md](ADVANTAGEKIT_TUNING.md)** - Tune from logs
+- 📖 **[WPILIB_INTEGRATION.md](WPILIB_INTEGRATION.md)** - Full integration guide
+
 ## Features
 
 - ✅ Full physics: gravity, drag, Magnus effect, collisions
