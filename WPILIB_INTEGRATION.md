@@ -5,7 +5,7 @@
 ### Method 1: Vendor Dependency (Recommended)
 
 1. **Download the vendor JSON file** from this repository:
-   - Right-click on `TrajectoryCalc.json` and save it
+   - Download `vendordeps/TrajectoryCalc.json` from this repo
 
 2. **Install in your WPILib project**:
    - Open VS Code with your robot project

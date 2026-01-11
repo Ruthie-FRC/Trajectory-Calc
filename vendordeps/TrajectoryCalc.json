@@ -6,7 +6,7 @@
   "mavenUrls": [
     "https://maven.pkg.github.com/Ruthie-FRC/Trajectory-Calc"
   ],
-  "jsonUrl": "https://raw.githubusercontent.com/Ruthie-FRC/Trajectory-Calc/main/TrajectoryCalc.json",
+  "jsonUrl": "https://raw.githubusercontent.com/Ruthie-FRC/Trajectory-Calc/main/vendordeps/TrajectoryCalc.json",
   "javaDependencies": [
     {
       "groupId": "com.ruthiefrc",
