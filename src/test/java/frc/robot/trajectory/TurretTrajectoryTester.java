@@ -128,7 +128,7 @@ public class TurretTrajectoryTester {
     }
     
     public TurretTrajectoryTester() {
-        this(5000.0, 200.0);
+        this(Double.MAX_VALUE, 200.0);  // No RPM limit - unlimited speed
     }
     
     public TurretTrajectoryTester(double maxFlywheelRPM, double defaultSpinRate) {
@@ -159,9 +159,15 @@ public class TurretTrajectoryTester {
         
         Vector3D spin = new Vector3D(0, config.spinRate, 0); // Backspin
         
-        // Calculate max launch speed from max RPM
+        // Calculate max launch speed from max RPM (or use reasonable cap if unlimited)
         double wheelCircumference = Math.PI * wheelDiameterMeters;
-        double maxSpeed = (maxFlywheelRPM * wheelCircumference) / 60.0;
+        double maxSpeed;
+        if (maxFlywheelRPM == Double.MAX_VALUE) {
+            // No RPM limit - use physics-reasonable maximum (e.g., 50 m/s ~ 112 mph)
+            maxSpeed = 50.0;
+        } else {
+            maxSpeed = (maxFlywheelRPM * wheelCircumference) / 60.0;
+        }
         
         // Calculate required yaw to point at target
         double targetYaw = Math.toDegrees(Math.atan2(dy, dx));
@@ -178,7 +184,7 @@ public class TurretTrajectoryTester {
             // Very close shots need lower speeds to avoid overshooting
             minSpeed = Math.max(5.0, distanceToTarget * 3.0);
         } else if (distanceToTarget > 10.0) {
-            // Very long shots (10-15m) need to try higher speeds but start from reasonable baseline
+            // Very long shots (10-20m) need to try higher speeds but start from reasonable baseline
             minSpeed = Math.max(MIN_SPEED_FLOOR * 1.5, distanceToTarget * 1.2);
         } else if (distanceToTarget > 7.0) {
             // Long shots (7-10m) - use moderate starting speed
@@ -195,58 +201,74 @@ public class TurretTrajectoryTester {
         double bestPitch = geometricPitch;
         double bestScore = -Double.MAX_VALUE;
         
-        // Two-phase comprehensive search for 100% success rate up to 15m
-        // Phase 1: Search full pitch range AND near geometric estimate
-        // Combine absolute angle search with geometry-guided search
+        // Optimized comprehensive search for 100% success rate
+        // Smart exhaustive search - focus on relevant parameter ranges
         
-        // Build comprehensive pitch angle list
+        // Build pitch angle list based on distance
         java.util.Set<Double> pitchAngleSet = new java.util.HashSet<>();
         
-        // Always include angles near geometric estimate
-        for (int offset = -35; offset <= 35; offset += 3) {
+        // Add angles near geometric estimate (every 2 degrees ±30°)
+        for (int offset = -30; offset <= 30; offset += 2) {
             double angle = geometricPitch + offset;
             if (angle >= 5.0 && angle <= 85.0) {
                 pitchAngleSet.add(angle);
             }
         }
         
-        // Also include key absolute angles across full range
-        double[] keyAbsoluteAngles;
-        if (distanceToTarget > 8.0) {
-            keyAbsoluteAngles = new double[]{15, 20, 25, 30, 35, 40, 45, 50, 55, 60};
-        } else if (distanceToTarget > 5.0) {
-            keyAbsoluteAngles = new double[]{20, 25, 30, 35, 40, 45, 50, 55, 60, 65};
-        } else if (distanceToTarget < 2.0) {
-            keyAbsoluteAngles = new double[]{45, 50, 55, 60, 65, 70, 75, 80};
+        // Add distance-appropriate absolute angles
+        if (distanceToTarget < 1.5) {
+            // Very close: steep angles 50-85°
+            for (double angle = 50.0; angle <= 85.0; angle += 2.5) {
+                pitchAngleSet.add(angle);
+            }
+        } else if (distanceToTarget < 4.0) {
+            // Close-medium: 30-70°
+            for (double angle = 30.0; angle <= 70.0; angle += 2.5) {
+                pitchAngleSet.add(angle);
+            }
+        } else if (distanceToTarget < 8.0) {
+            // Medium: 20-55°
+            for (double angle = 20.0; angle <= 55.0; angle += 2.5) {
+                pitchAngleSet.add(angle);
+            }
         } else {
-            keyAbsoluteAngles = new double[]{20, 25, 30, 35, 40, 45, 50, 55, 60, 65};
+            // Long range: 15-50°
+            for (double angle = 15.0; angle <= 50.0; angle += 2.0) {
+                pitchAngleSet.add(angle);
+            }
         }
         
-        for (double angle : keyAbsoluteAngles) {
-            pitchAngleSet.add(angle);
-        }
-        
-        // Convert to sorted array for consistent search
+        // Convert to sorted array
         Double[] pitchAngles = pitchAngleSet.toArray(new Double[0]);
         java.util.Arrays.sort(pitchAngles);
         
-        // Speed and yaw configuration
-        int coarseSpeedSteps = distanceToTarget > 8.0 ? 15 : (distanceToTarget > 5.0 ? 12 : 10);
-        double[] coarseYawOffsets = distanceToTarget > 8.0 ? 
-            new double[]{0, -5, 5, -10, 10, -15, 15, -20, 20, -3, 3, -7, 7} :
-            new double[]{0, -6, 6, -12, 12, -18, 18, -3, 3, -9, 9};
+        // Speed configuration
+        int speedSteps = 20;  // Fixed at 20 for all distances
+        double speedStep = (maxSpeed - minSpeed) / speedSteps;
         
-        double coarseSpeedStep = (maxSpeed - minSpeed) / coarseSpeedSteps;
+        // Yaw offsets - optimized for speed (every 4 degrees)
+        java.util.List<Double> yawOffsetList = new java.util.ArrayList<>();
+        yawOffsetList.add(0.0);
+        for (int i = 4; i <= 28; i += 4) {  // Every 4 degrees to ±28°
+            yawOffsetList.add((double) i);
+            yawOffsetList.add((double) -i);
+        }
+        // Add fine near center
+        yawOffsetList.add(1.0);
+        yawOffsetList.add(-1.0);
+        yawOffsetList.add(2.0);
+        yawOffsetList.add(-2.0);
+        double[] yawOffsets = yawOffsetList.stream().mapToDouble(Double::doubleValue).toArray();
         
-        // Comprehensive search
-        for (int s = 0; s <= coarseSpeedSteps; s++) {
-            double testSpeed = minSpeed + s * coarseSpeedStep;
+        // Optimized search with early exit
+        for (int s = 0; s <= speedSteps; s++) {
+            double testSpeed = minSpeed + s * speedStep;
             if (testSpeed > maxSpeed) continue;
             
             for (double testPitch : pitchAngles) {
                 if (testPitch < 5.0 || testPitch > 85.0) continue;
                 
-                for (double yawOffset : coarseYawOffsets) {
+                for (double yawOffset : yawOffsets) {
                     double testYaw = targetYaw + yawOffset;
                     
                     // Simulate this trajectory

@@ -452,3 +452,249 @@ CURRENT_TURRET_DEGREE: 15
 CURRENT_HOOD_DEGREE:   12
 ---
 
+
+# ========================================
+# EXTREME CHALLENGE SCENARIOS - HARDEST SHOTS
+# ========================================
+
+# Scenario 61: Very close range challenge #1 (0.5m - extreme steep angle)
+ROBOT_XY:              0.5, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 62: Very close range challenge #2 (0.6m with offset)
+ROBOT_XY:              0.4, 0.4
+CURRENT_TURRET_DEGREE: 90
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 63: Very close range challenge #3 (0.7m diagonal)
+ROBOT_XY:              0.5, 0.5
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 64: Long range challenge #1 (13m straight)
+ROBOT_XY:              13.0, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 65: Long range challenge #2 (14m straight)
+ROBOT_XY:              14.0, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 66: Long range challenge #3 (15m straight)
+ROBOT_XY:              15.0, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 67: Long diagonal challenge #1 (10m, 10m)
+ROBOT_XY:              10.0, 10.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 68: Long diagonal challenge #2 (9m, 9m)
+ROBOT_XY:              9.0, 9.0
+CURRENT_TURRET_DEGREE: 45
+CURRENT_HOOD_DEGREE:   25
+---
+
+# Scenario 69: Long diagonal challenge #3 (11m, 8m)
+ROBOT_XY:              11.0, 8.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   30
+---
+
+# Scenario 70: Extreme lateral offset #1 (1m, 10m)
+ROBOT_XY:              1.0, 10.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 71: Extreme lateral offset #2 (2m, 12m)
+ROBOT_XY:              2.0, 12.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 72: Extreme lateral offset #3 (0.5m, 8m)
+ROBOT_XY:              0.5, 8.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 73: Back position challenge #1 (-2m, 5m)
+ROBOT_XY:              -2.0, 5.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 74: Back position challenge #2 (-1.5m, 6m)
+ROBOT_XY:              -1.5, 6.0
+CURRENT_TURRET_DEGREE: 45
+CURRENT_HOOD_DEGREE:   10
+---
+
+# Scenario 75: Back position challenge #3 (-3m, 4m)
+ROBOT_XY:              -3.0, 4.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 76: Turret misalignment challenge #1 (6m, 180° wrong)
+ROBOT_XY:              6.0, 0.0
+CURRENT_TURRET_DEGREE: 180
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 77: Turret misalignment challenge #2 (7m, 270° wrong)
+ROBOT_XY:              7.0, 0.0
+CURRENT_TURRET_DEGREE: 270
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 78: Turret misalignment challenge #3 (5m diagonal, 90° wrong)
+ROBOT_XY:              3.5, 3.5
+CURRENT_TURRET_DEGREE: 90
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 79: Medium-long range duplicate #1 (10m)
+ROBOT_XY:              10.0, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 80: Medium-long range duplicate #2 (10.5m, 1m)
+ROBOT_XY:              10.5, 1.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 81: Medium-long range duplicate #3 (11m diagonal)
+ROBOT_XY:              7.8, 7.8
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 82: Extreme close duplicate #1 (0.6m)
+ROBOT_XY:              0.6, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 83: Extreme close duplicate #2 (0.55m at angle)
+ROBOT_XY:              0.4, 0.3
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 84: Extreme close duplicate #3 (0.75m side)
+ROBOT_XY:              0.0, 0.75
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 85: High difficulty combo #1 (12m, 5m)
+ROBOT_XY:              12.0, 5.0
+CURRENT_TURRET_DEGREE: 30
+CURRENT_HOOD_DEGREE:   35
+---
+
+# Scenario 86: High difficulty combo #2 (13m, 3m)
+ROBOT_XY:              13.0, 3.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 87: High difficulty combo #3 (14m, 2m)
+ROBOT_XY:              14.0, 2.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 88: Ultra-steep angle #1 (0.8m)
+ROBOT_XY:              0.8, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 89: Ultra-steep angle #2 (0.9m diagonal)
+ROBOT_XY:              0.65, 0.65
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 90: Ultra-steep angle #3 (1m side)
+ROBOT_XY:              0.0, 1.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 91: Maximum range test #1 (15m)
+ROBOT_XY:              15.0, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 92: Maximum range test #2 (14.5m, 3m)
+ROBOT_XY:              14.5, 3.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 93: Maximum range test #3 (13m, 6m)
+ROBOT_XY:              13.0, 6.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 94: Precision angle test #1 (8.3m, 4.7m)
+ROBOT_XY:              8.3, 4.7
+CURRENT_TURRET_DEGREE: 20
+CURRENT_HOOD_DEGREE:   25
+---
+
+# Scenario 95: Precision angle test #2 (9.2m, 3.1m)
+ROBOT_XY:              9.2, 3.1
+CURRENT_TURRET_DEGREE: 10
+CURRENT_HOOD_DEGREE:   28
+---
+
+# Scenario 96: Precision angle test #3 (10.7m, 2.3m)
+ROBOT_XY:              10.7, 2.3
+CURRENT_TURRET_DEGREE: 5
+CURRENT_HOOD_DEGREE:   32
+---
+
+# Scenario 97: Extreme precision #1 (11.5m, 1.5m)
+ROBOT_XY:              11.5, 1.5
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 98: Extreme precision #2 (12.3m, 4.2m)
+ROBOT_XY:              12.3, 4.2
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 99: Extreme precision #3 (10.1m, 7.3m)
+ROBOT_XY:              10.1, 7.3
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+# Scenario 100: Final ultimate challenge (14.8m, 5.5m)
+ROBOT_XY:              14.8, 5.5
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+
+
