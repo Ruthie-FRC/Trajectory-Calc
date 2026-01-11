@@ -122,6 +122,26 @@ See the [examples/wpilib/](examples/wpilib/) directory:
 - `ExampleShooterSubsystem.java` - Full-featured subsystem
 - `AutoAimCommand.java` - Command-based example
 
+## Running the Trajectory Calculator
+
+Test the trajectory calculator on all scenarios in `test-targets.txt`:
+
+**Linux/Mac:**
+```bash
+./run-calculator.sh [max_rpm] [spin_rate]
+# Example: ./run-calculator.sh 5000 200
+# Defaults: max_rpm=5000, spin_rate=200
+```
+
+**Windows:**
+```batch
+run-calculator.bat [max_rpm] [spin_rate]
+REM Example: run-calculator.bat 5000 200
+REM Defaults: max_rpm=5000, spin_rate=200
+```
+
+The calculator now uses max flywheel RPM as a constraint (default 5000 RPM) instead of fixed shot speed. It will automatically find the optimal launch speed within the RPM limit for each scenario.
+
 ## Building from Source
 
 ```bash

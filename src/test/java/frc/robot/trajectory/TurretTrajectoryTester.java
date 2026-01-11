@@ -7,6 +7,7 @@ import frc.robot.trajectory.simulation.SpinShotSimulator;
 import frc.robot.trajectory.physics.PhysicsModel;
 import frc.robot.trajectory.physics.ProjectileProperties;
 import frc.robot.trajectory.physics.HubGeometry;
+import frc.robot.trajectory.physics.PhysicsConstants;
 import frc.robot.trajectory.calibration.CalibrationParameters;
 
 import java.io.BufferedReader;
@@ -24,8 +25,9 @@ public class TurretTrajectoryTester {
     
     private final InverseSolver solver;
     private final SpinShotSimulator simulator;
-    private final double defaultSpeed;
+    private final double maxFlywheelRPM;
     private final double defaultSpinRate;
+    private final double wheelDiameterMeters = 0.1016; // 4 inches
     
     /**
      * Configuration for a test scenario.
@@ -35,17 +37,15 @@ public class TurretTrajectoryTester {
         public Vector3D targetPosition;     // Target position (x, y, z)
         public double turretYawOffset;      // Turret yaw offset from robot heading (degrees)
         public double turretPitchOffset;    // Turret pitch offset from horizontal (degrees)
-        public double speed;                 // Launch speed (m/s)
         public double spinRate;              // Ball spin rate (rad/s)
         
         public TestConfig(Vector3D robotPos, Vector3D targetPos, 
                           double yawOffset, double pitchOffset,
-                          double speed, double spinRate) {
+                          double spinRate) {
             this.robotPosition = robotPos;
             this.targetPosition = targetPos;
             this.turretYawOffset = yawOffset;
             this.turretPitchOffset = pitchOffset;
-            this.speed = speed;
             this.spinRate = spinRate;
         }
     }
@@ -122,10 +122,10 @@ public class TurretTrajectoryTester {
     }
     
     public TurretTrajectoryTester() {
-        this(12.0, 200.0);
+        this(5000.0, 200.0);
     }
     
-    public TurretTrajectoryTester(double defaultSpeed, double defaultSpinRate) {
+    public TurretTrajectoryTester(double maxFlywheelRPM, double defaultSpinRate) {
         CalibrationParameters calibration = new CalibrationParameters();
         ProjectileProperties projectile = new ProjectileProperties();
         PhysicsModel physics = new PhysicsModel(calibration, projectile);
@@ -133,12 +133,13 @@ public class TurretTrajectoryTester {
         TrajectorySimulator trajSim = new TrajectorySimulator(physics, hub);
         this.solver = new InverseSolver(trajSim);
         this.simulator = new SpinShotSimulator(calibration, projectile);
-        this.defaultSpeed = defaultSpeed;
+        this.maxFlywheelRPM = maxFlywheelRPM;
         this.defaultSpinRate = defaultSpinRate;
     }
     
     /**
      * Compute optimal solution accounting for turret position and orientation.
+     * Now respects max flywheel RPM constraint.
      */
     public SolutionOutput computeOptimalShot(TestConfig config) {
         SolutionOutput output = new SolutionOutput();
@@ -148,12 +149,43 @@ public class TurretTrajectoryTester {
         double dy = config.targetPosition.y - config.robotPosition.y;
         double dz = config.targetPosition.z - config.robotPosition.z;
         
-        Vector3D relativeTarget = new Vector3D(dx, dy, dz);
         Vector3D spin = new Vector3D(0, config.spinRate, 0); // Backspin
         
-        // Solve for optimal trajectory from turret position
-        InverseSolver.SolutionResult solution = solver.solve(
-            relativeTarget, config.speed, spin);
+        // Calculate max launch speed from max RPM
+        double wheelCircumference = Math.PI * wheelDiameterMeters;
+        double maxSpeed = (maxFlywheelRPM * wheelCircumference) / 60.0;
+        
+        // Try progressively higher speeds starting from a reasonable minimum
+        // Most FRC shots need at least 8 m/s, but can go up to the max
+        double distanceToTarget = Math.sqrt(dx * dx + dy * dy);
+        double minSpeed = Math.max(8.0, distanceToTarget * 0.8); // Heuristic minimum
+        minSpeed = Math.min(minSpeed, maxSpeed); // Can't exceed max
+        
+        InverseSolver.SolutionResult bestSolution = null;
+        double bestSpeed = 0;
+        double bestScore = -Double.MAX_VALUE;
+        
+        // Try different speeds with finer resolution
+        int numSteps = 20;
+        double speedStep = (maxSpeed - minSpeed) / numSteps;
+        
+        for (int i = 0; i <= numSteps; i++) {
+            double testSpeed = minSpeed + i * speedStep;
+            if (testSpeed > maxSpeed) continue;
+            
+            // Solve for optimal trajectory at this speed
+            // Pass robot position (absolute), not relative target
+            InverseSolver.SolutionResult solution = solver.solve(
+                config.robotPosition, testSpeed, spin);
+            
+            if (solution != null && solution.isHit() && solution.score > bestScore) {
+                bestScore = solution.score;
+                bestSolution = solution;
+                bestSpeed = testSpeed;
+            }
+        }
+        
+        InverseSolver.SolutionResult solution = bestSolution;
         
         if (solution == null || !solution.isHit()) {
             output.hasShot = false;
@@ -168,10 +200,8 @@ public class TurretTrajectoryTester {
         output.finalYaw = solution.launchYawDeg;
         output.finalPitch = solution.launchPitchDeg;
         
-        // Convert speed to typical FRC shooter RPM (assuming 4" wheel diameter)
-        double wheelDiameterMeters = 0.1016; // 4 inches
-        double wheelCircumference = Math.PI * wheelDiameterMeters;
-        output.shooterRPM = (config.speed / wheelCircumference) * 60.0;
+        // Convert speed to shooter RPM
+        output.shooterRPM = (bestSpeed / wheelCircumference) * 60.0;
         
         output.spinRate = config.spinRate;
         output.spinAxis = spin.normalize();
@@ -191,14 +221,14 @@ public class TurretTrajectoryTester {
         
         // Calculate margin of error based on trajectory arc and physics uncertainties
         // Factors: drag uncertainty, spin variation, entry angle
-        double distanceToTarget = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        double distanceToTargetForError = Math.sqrt(dx * dx + dy * dy + dz * dz);
         double dragErrorFactor = 0.02; // ±2% drag coefficient uncertainty
         double spinErrorFactor = 0.05; // ±5% spin efficiency uncertainty
-        output.marginOfError = distanceToTarget * (dragErrorFactor + spinErrorFactor * (config.spinRate / 300.0));
+        output.marginOfError = distanceToTargetForError * (dragErrorFactor + spinErrorFactor * (config.spinRate / 300.0));
         
         // Generate full trajectory equation (non-parabolic with all physics effects)
         output.trajectoryEquation = generateTrajectoryEquation(
-            config.robotPosition, relativeTarget, config.speed, spin, solution);
+            config.robotPosition, new Vector3D(dx, dy, dz), bestSpeed, spin, solution);
         
         // Extract trajectory details
         if (solution.trajectory != null) {
@@ -210,8 +240,8 @@ public class TurretTrajectoryTester {
                 }
             }
             
-            output.flightTime = solution.trajectory.timeToTarget;
-            output.apexHeight = solution.trajectory.apexHeight;
+            output.flightTime = solution.trajectory.getFlightTime();
+            output.apexHeight = solution.trajectory.getMaxHeight();
             
             // Generate trajectory description
             double distance = Math.sqrt(dx * dx + dy * dy);
@@ -276,7 +306,7 @@ public class TurretTrajectoryTester {
         eq.append(String.format("      dvᵧ/dt = -½(ρCₐA/m)|v|vᵧ + (Cₘ/m)(ω_zvₓ - ωₓv_z)|ω||v|\n"));
         eq.append(String.format("      dv_z/dt = -g - ½(ρCₐA/m)|v|v_z + (Cₘ/m)(ωₓvᵧ - ωᵧvₓ)|ω||v|\n"));
         eq.append("      \n");
-        eq.append("      Spin Decay:\n"));
+        eq.append("      Spin Decay:\n");
         eq.append("      ───────────────────────────────────────\n");
         eq.append(String.format("      dω/dt = -kω(1 + |v|/%.1f)\n", PhysicsConstants.SPIN_DECAY_VELOCITY_FACTOR));
         eq.append("      \n");
@@ -308,15 +338,26 @@ public class TurretTrajectoryTester {
     
     /**
      * Read test configurations from file.
-     * New format uses labeled sections:
-     *   ROBOT_POSITION: x, y, z
-     *   TARGET_POSITION: x, y, z
-     *   TURRET_OFFSET: yaw, pitch
-     *   LAUNCH_PARAMS: speed, spin (optional)
-     *   ---
+     * Supports two formats:
+     *   1. Simplified format (as in test-targets.txt):
+     *      ROBOT_XY: x, y (shooter height fixed at 0.5m)
+     *      CURRENT_TURRET_DEGREE: yaw
+     *      CURRENT_HOOD_DEGREE: pitch
+     *      LAUNCH_PARAMS: speed, spin (optional - spin only used now)
+     *      ---
+     *   2. Full format:
+     *      ROBOT_POSITION: x, y, z
+     *      TARGET_POSITION: x, y, z
+     *      TURRET_OFFSET: yaw, pitch
+     *      LAUNCH_PARAMS: speed, spin (optional - spin only used now)
+     *      ---
      */
     public List<TestConfig> readConfigsFromFile(String filename) throws IOException {
         List<TestConfig> configs = new ArrayList<>();
+        
+        // Default target at field origin (0, 0, 1.83m) - HUB center
+        Vector3D defaultTarget = new Vector3D(0.0, 0.0, 1.83);
+        double defaultShooterHeight = 0.5; // meters
         
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
             String line;
@@ -326,7 +367,6 @@ public class TurretTrajectoryTester {
             Vector3D targetPos = null;
             Double yawOffset = null;
             Double pitchOffset = null;
-            Double speed = null;
             Double spin = null;
             
             while ((line = reader.readLine()) != null) {
@@ -341,14 +381,17 @@ public class TurretTrajectoryTester {
                 // Check for section separator
                 if (line.equals("---")) {
                     // Complete scenario - validate and add
-                    if (robotPos != null && targetPos != null && 
-                        yawOffset != null && pitchOffset != null) {
+                    if (robotPos != null && yawOffset != null && pitchOffset != null) {
                         
-                        double finalSpeed = (speed != null) ? speed : defaultSpeed;
+                        // Use default target if not specified
+                        if (targetPos == null) {
+                            targetPos = defaultTarget;
+                        }
+                        
                         double finalSpin = (spin != null) ? spin : defaultSpinRate;
                         
                         configs.add(new TestConfig(
-                            robotPos, targetPos, yawOffset, pitchOffset, finalSpeed, finalSpin));
+                            robotPos, targetPos, yawOffset, pitchOffset, finalSpin));
                     } else {
                         System.err.println("Line " + lineNum + 
                             ": Incomplete scenario (missing required fields)");
@@ -359,14 +402,26 @@ public class TurretTrajectoryTester {
                     targetPos = null;
                     yawOffset = null;
                     pitchOffset = null;
-                    speed = null;
                     spin = null;
                     continue;
                 }
                 
                 // Parse labeled lines
                 try {
-                    if (line.startsWith("ROBOT_POSITION:")) {
+                    // Simplified format (ROBOT_XY)
+                    if (line.startsWith("ROBOT_XY:")) {
+                        String values = line.substring("ROBOT_XY:".length()).trim();
+                        String[] parts = values.split(",");
+                        if (parts.length == 2) {
+                            robotPos = new Vector3D(
+                                Double.parseDouble(parts[0].trim()),
+                                Double.parseDouble(parts[1].trim()),
+                                defaultShooterHeight
+                            );
+                        }
+                    } 
+                    // Full format (ROBOT_POSITION)
+                    else if (line.startsWith("ROBOT_POSITION:")) {
                         String values = line.substring("ROBOT_POSITION:".length()).trim();
                         String[] parts = values.split(",");
                         if (parts.length == 3) {
@@ -386,7 +441,19 @@ public class TurretTrajectoryTester {
                                 Double.parseDouble(parts[2].trim())
                             );
                         }
-                    } else if (line.startsWith("TURRET_OFFSET:")) {
+                    } 
+                    // Simplified format (CURRENT_TURRET_DEGREE)
+                    else if (line.startsWith("CURRENT_TURRET_DEGREE:")) {
+                        String value = line.substring("CURRENT_TURRET_DEGREE:".length()).trim();
+                        yawOffset = Double.parseDouble(value);
+                    }
+                    // Simplified format (CURRENT_HOOD_DEGREE)
+                    else if (line.startsWith("CURRENT_HOOD_DEGREE:")) {
+                        String value = line.substring("CURRENT_HOOD_DEGREE:".length()).trim();
+                        pitchOffset = Double.parseDouble(value);
+                    }
+                    // Full format (TURRET_OFFSET)
+                    else if (line.startsWith("TURRET_OFFSET:")) {
                         String values = line.substring("TURRET_OFFSET:".length()).trim();
                         String[] parts = values.split(",");
                         if (parts.length == 2) {
@@ -397,7 +464,7 @@ public class TurretTrajectoryTester {
                         String values = line.substring("LAUNCH_PARAMS:".length()).trim();
                         String[] parts = values.split(",");
                         if (parts.length == 2) {
-                            speed = Double.parseDouble(parts[0].trim());
+                            // First parameter (speed) is now ignored, only spin is used
                             spin = Double.parseDouble(parts[1].trim());
                         }
                     }
@@ -419,7 +486,7 @@ public class TurretTrajectoryTester {
         System.out.println("Turret Trajectory Tester");
         System.out.println("=======================================================");
         System.out.println("Input file: " + filename);
-        System.out.println("Default speed: " + defaultSpeed + " m/s");
+        System.out.println("Max flywheel RPM: " + maxFlywheelRPM);
         System.out.println("Default spin: " + defaultSpinRate + " rad/s");
         System.out.println("=======================================================\n");
         
@@ -455,8 +522,6 @@ public class TurretTrajectoryTester {
             System.out.println("  Current turret: Yaw " + 
                 String.format("%+.1f", config.turretYawOffset) + "°, Pitch " +
                 String.format("%+.1f", config.turretPitchOffset) + "°");
-            System.out.println("  Launch speed: " + 
-                String.format("%.2f", config.speed) + " m/s");
             
             double dx = config.targetPosition.x - config.robotPosition.x;
             double dy = config.targetPosition.y - config.robotPosition.y;
@@ -491,11 +556,11 @@ public class TurretTrajectoryTester {
      * Main method for standalone execution.
      */
     public static void main(String[] args) {
-        String filename = args.length > 0 ? args[0] : "turret-test-configs.txt";
-        double speed = args.length > 1 ? Double.parseDouble(args[1]) : 12.0;
+        String filename = args.length > 0 ? args[0] : "test-targets.txt";
+        double maxRPM = args.length > 1 ? Double.parseDouble(args[1]) : 5000.0;
         double spin = args.length > 2 ? Double.parseDouble(args[2]) : 200.0;
         
-        TurretTrajectoryTester tester = new TurretTrajectoryTester(speed, spin);
+        TurretTrajectoryTester tester = new TurretTrajectoryTester(maxRPM, spin);
         tester.processFile(filename);
     }
 }
