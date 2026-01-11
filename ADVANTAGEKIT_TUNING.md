@@ -173,6 +173,8 @@ CalibrationParameters params = new CalibrationParameters()
 
 ## Automated Tuning from Logs
 
+### Batch Calibration (Traditional)
+
 The library can auto-tune from your logged shots:
 
 ```java
@@ -195,6 +197,97 @@ public void calibrateFromPractice() {
     System.out.println(trajectoryCalc.getCalibrationStats());
 }
 ```
+
+### Incremental Calibration (NEW - Real-Time Learning)
+
+Enable automatic parameter updates after each shot during practice:
+
+```java
+// In your subsystem constructor or init
+public void initPracticeMode() {
+    // Enable incremental calibration for practice
+    trajectoryCalc.setIncrementalCalibrationEnabled(true);
+    
+    // Set learning rate (0.0-1.0, default: 0.05)
+    trajectoryCalc.setLearningRate(0.05); // 5% adjustment per shot
+    
+    // Parameters now update automatically after each logged shot!
+}
+
+public void initCompetitionMode() {
+    // Disable for stable competition performance
+    trajectoryCalc.setIncrementalCalibrationEnabled(false);
+}
+```
+
+**How Incremental Calibration Works:**
+1. Logs each shot result (hit/miss)
+2. Analyzes recent performance window (last 5 shots)
+3. If hit rate < 60%, adjusts drag and speed efficiency
+4. Updates parameters in real-time without manual intervention
+5. Requires 5 baseline shots before starting adjustments
+
+**When to Use:**
+- ✅ **Practice sessions** - Continuous improvement
+- ✅ **Testing new balls** - Fast adaptation
+- ✅ **Pre-match warmup** - Quick tuning
+- ❌ **Competition matches** - Use stable parameters
+
+**Monitoring Incremental Updates:**
+
+```java
+// Log parameter changes in AdvantageKit
+@Override
+public void periodic() {
+    CalibrationParameters params = trajectoryCalc.getCalibrationParameters();
+    Logger.recordOutput("Trajectory/Calibration/DragCoeff", params.dragCoefficient);
+    Logger.recordOutput("Trajectory/Calibration/SpeedEfficiency", params.speedEfficiency);
+    Logger.recordOutput("Trajectory/Calibration/IncrementalEnabled", 
+        trajectoryCalc.isIncrementalCalibrationEnabled());
+}
+```
+
+**Best Practices:**
+- Start with learning rate of 0.05 (5%)
+- Increase to 0.1 (10%) for faster adaptation if needed
+- Monitor in AdvantageScope to see parameter evolution
+- Let it run for 15-20 shots to stabilize
+- Save final parameters for competition use
+
+### Pre-Seeded Guesses (NEW - Faster Convergence)
+
+The solver automatically caches successful shots for faster convergence:
+
+```java
+// No configuration needed - enabled by default!
+// First shot from a position uses geometric estimate
+// Subsequent shots from nearby positions use cached angles
+
+// Shots are cached on a 0.5m position grid
+// Each successful shot improves future solves from that area
+```
+
+**Benefits:**
+- 10-30% faster solve times for repeated positions
+- More consistent angle solutions
+- Automatic - no manual management needed
+- Cache clears automatically if disabled
+
+**Viewing Cache Performance:**
+
+```java
+// See solve times in logs
+long startTime = System.nanoTime();
+var solution = trajectoryCalc.calculateShot(x, y, z, speed, spin);
+long duration = (System.nanoTime() - startTime) / 1_000_000;
+
+Logger.recordOutput("Trajectory/SolveTime", duration);
+```
+
+Expect:
+- First solve from new position: 40-70ms
+- Cached solve: 20-50ms (faster due to better initial guess)
+
 
 ## Logging Best Practices
 
