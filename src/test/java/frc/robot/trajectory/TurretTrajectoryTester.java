@@ -29,6 +29,11 @@ public class TurretTrajectoryTester {
     private final double defaultSpinRate;
     private final double wheelDiameterMeters = 0.1016; // 4 inches
     
+    // Speed search heuristics
+    private static final double MIN_SPEED_FACTOR = 0.8; // Minimum speed as fraction of distance
+    private static final double MIN_SPEED_FLOOR = 8.0; // Absolute minimum speed in m/s
+    private static final int SPEED_SEARCH_STEPS = 20; // Number of speeds to try
+    
     /**
      * Configuration for a test scenario.
      */
@@ -144,7 +149,7 @@ public class TurretTrajectoryTester {
     public SolutionOutput computeOptimalShot(TestConfig config) {
         SolutionOutput output = new SolutionOutput();
         
-        // Calculate relative position from turret to target
+        // Calculate distance to target for trajectory equation generation
         double dx = config.targetPosition.x - config.robotPosition.x;
         double dy = config.targetPosition.y - config.robotPosition.y;
         double dz = config.targetPosition.z - config.robotPosition.z;
@@ -156,9 +161,9 @@ public class TurretTrajectoryTester {
         double maxSpeed = (maxFlywheelRPM * wheelCircumference) / 60.0;
         
         // Try progressively higher speeds starting from a reasonable minimum
-        // Most FRC shots need at least 8 m/s, but can go up to the max
+        // Most FRC shots need at least MIN_SPEED_FLOOR m/s, but can go up to the max
         double distanceToTarget = Math.sqrt(dx * dx + dy * dy);
-        double minSpeed = Math.max(8.0, distanceToTarget * 0.8); // Heuristic minimum
+        double minSpeed = Math.max(MIN_SPEED_FLOOR, distanceToTarget * MIN_SPEED_FACTOR);
         minSpeed = Math.min(minSpeed, maxSpeed); // Can't exceed max
         
         InverseSolver.SolutionResult bestSolution = null;
@@ -166,10 +171,9 @@ public class TurretTrajectoryTester {
         double bestScore = -Double.MAX_VALUE;
         
         // Try different speeds with finer resolution
-        int numSteps = 20;
-        double speedStep = (maxSpeed - minSpeed) / numSteps;
+        double speedStep = (maxSpeed - minSpeed) / SPEED_SEARCH_STEPS;
         
-        for (int i = 0; i <= numSteps; i++) {
+        for (int i = 0; i <= SPEED_SEARCH_STEPS; i++) {
             double testSpeed = minSpeed + i * speedStep;
             if (testSpeed > maxSpeed) continue;
             
