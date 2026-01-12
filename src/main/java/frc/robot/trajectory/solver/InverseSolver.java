@@ -131,15 +131,19 @@ public class InverseSolver {
         double bestScore = -1.0;
         TrajectorySimulator.TrajectoryResult bestResult = null;
         
-        // Grid search around initial guess
-        double yawStep = 2.0; // degrees
-        double pitchStep = 1.0; // degrees
+        // Grid search around initial guess - WIDER search for FRC shots
+        // Increased from 2.0°/1.0° to 5.0°/3.0° to handle trajectory variations
+        // from simple ballistic estimates due to drag and Magnus effects
+        double yawStep = 5.0; // degrees - wider for large arenas
+        double pitchStep = 3.0; // degrees - wider to find viable arcs
         
         for (int iter = 0; iter < 3; iter++) {
             double currentBestScore = bestScore;
             
-            for (double yawOffset = -yawStep * 2; yawOffset <= yawStep * 2; yawOffset += yawStep) {
-                for (double pitchOffset = -pitchStep * 2; pitchOffset <= pitchStep * 2; pitchOffset += pitchStep) {
+            // Expanded from ±2 steps to ±3 steps (25 → 49 grid points per iteration)
+            // Early exit if good solution found to mitigate performance impact
+            for (double yawOffset = -yawStep * 3; yawOffset <= yawStep * 3; yawOffset += yawStep) {
+                for (double pitchOffset = -pitchStep * 3; pitchOffset <= pitchStep * 3; pitchOffset += pitchStep) {
                     double tryYaw = bestYaw + yawOffset;
                     double tryPitch = bestPitch + pitchOffset;
                     
@@ -156,7 +160,17 @@ public class InverseSolver {
                         bestYaw = tryYaw;
                         bestPitch = tryPitch;
                         bestResult = result;
+                        
+                        // Early exit if we found a very good solution (score > 0.5)
+                        if (result.hitTarget && score > 0.5) {
+                            break;
+                        }
                     }
+                }
+                
+                // Break outer loop too if early exit triggered
+                if (bestResult != null && bestResult.hitTarget && bestScore > 0.5) {
+                    break;
                 }
             }
             
