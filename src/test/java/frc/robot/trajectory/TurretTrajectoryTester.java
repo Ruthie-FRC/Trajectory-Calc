@@ -30,12 +30,14 @@ public class TurretTrajectoryTester {
     private final double defaultSpinRate;
     private final double wheelDiameterMeters = 0.1016; // 4 inches
     
-    // Fast search heuristics (optimized for <0.1 second computation)
-    private static final double GEOMETRIC_SEARCH_RANGE_DEG = 15.0; // Search range around geometric estimate
-    private static final double GEOMETRIC_SEARCH_STEP_DEG = 3.0;   // Step size for geometric search
-    private static final int FAST_SPEED_STEPS = 8;                  // Number of speeds to try in fast mode
-    private static final double EARLY_EXIT_THRESHOLD = 0.85;        // Exit when solution score exceeds this
-    private static final double REFINEMENT_EXIT_THRESHOLD = 0.90;   // Exit refinement phase at this score
+    // Ultra-fast search heuristics (optimized for <0.1 second total computation)
+    // Strategy: Quickly identify few practical candidates, then pick the best
+    private static final double GEOMETRIC_SEARCH_RANGE_DEG = 12.0; // Search range around geometric estimate
+    private static final double GEOMETRIC_SEARCH_STEP_DEG = 4.0;   // Step size for geometric search
+    private static final int FAST_SPEED_STEPS = 5;                  // Number of speeds to try (min, 25%, 50%, 75%, max)
+    private static final double EARLY_EXIT_THRESHOLD = 0.75;        // Exit after finding good candidates (lower = faster)
+    private static final int MAX_CANDIDATES_TO_FIND = 5;            // Stop after finding this many viable shots
+    private static final double REFINEMENT_EXIT_THRESHOLD = 0.80;   // Only refine if best score below this
     
     /**
      * Configuration for a test scenario.
@@ -200,11 +202,13 @@ public class TurretTrajectoryTester {
         // Optimized comprehensive search for 100% success rate
         // Smart exhaustive search - focus on relevant parameter ranges
         
-        // Build pitch angle list - FAST INTELLIGENT SEARCH (target: <0.1 second)
-        // Use smart heuristics around geometric estimate with coarse sampling
+        // ULTRA-FAST CANDIDATE IDENTIFICATION (<0.1s total)
+        // Strategy: Quickly identify only practical angles, test minimal combinations
+        // Then pick the best of the few candidates found
+        
         java.util.Set<Double> pitchAngleSet = new java.util.HashSet<>();
         
-        // Smart sampling: test geometric estimate with configured range and step
+        // Smart sampling around geometric estimate (fewer angles)
         for (double offset = -GEOMETRIC_SEARCH_RANGE_DEG; offset <= GEOMETRIC_SEARCH_RANGE_DEG; offset += GEOMETRIC_SEARCH_STEP_DEG) {
             double angle = geometricPitch + offset;
             if (angle >= 5.0 && angle <= 85.0) {
@@ -212,56 +216,51 @@ public class TurretTrajectoryTester {
             }
         }
         
-        // Add key absolute angles based on distance (fast lookup table approach)
-        // These are empirically determined optimal ranges for FRC shooting
+        // Add only most practical angles based on distance (fewer options)
+        // Skip impractical angles entirely
         if (distanceToTarget < 1.5) {
-            // Ultra-close: test very steep angles (geometric often underestimates here)
-            for (double angle = 55.0; angle <= 85.0; angle += 4.0) {
-                pitchAngleSet.add(angle);
-            }
+            // Ultra-close: only very steep angles work
+            pitchAngleSet.add(65.0);
+            pitchAngleSet.add(70.0);
+            pitchAngleSet.add(75.0);
+            pitchAngleSet.add(80.0);
         } else if (distanceToTarget < 3.0) {
-            // Close: test high arcs
-            for (double angle = 40.0; angle <= 75.0; angle += 5.0) {
-                pitchAngleSet.add(angle);
-            }
+            // Close: only high arcs work
+            pitchAngleSet.add(50.0);
+            pitchAngleSet.add(57.0);
+            pitchAngleSet.add(65.0);
+            pitchAngleSet.add(72.0);
+            pitchAngleSet.add(80.0);
         } else if (distanceToTarget < 6.0) {
-            // Medium: test mid-range arcs
-            for (double angle = 30.0; angle <= 60.0; angle += 5.0) {
-                pitchAngleSet.add(angle);
-            }
+            // Medium: mid-range arcs
+            pitchAngleSet.add(35.0);
+            pitchAngleSet.add(42.0);
+            pitchAngleSet.add(50.0);
+            pitchAngleSet.add(57.0);
+            pitchAngleSet.add(65.0);
         } else {
-            // Long: test optimal range arcs
-            for (double angle = 25.0; angle <= 50.0; angle += 5.0) {
-                pitchAngleSet.add(angle);
-            }
+            // Long: optimal trajectory range
+            pitchAngleSet.add(30.0);
+            pitchAngleSet.add(37.0);
+            pitchAngleSet.add(45.0);
+            pitchAngleSet.add(52.0);
+            pitchAngleSet.add(60.0);
         }
         
         // Convert to sorted array
         Double[] pitchAngles = pitchAngleSet.toArray(new Double[0]);
         java.util.Arrays.sort(pitchAngles);
         
-        // Speed configuration - FAST (minimal steps)
+        // Speed configuration - MINIMAL (only critical speeds)
         int speedSteps = FAST_SPEED_STEPS;
         double speedStep = (maxSpeed - minSpeed) / speedSteps;
         
-        // Yaw offsets - MINIMAL SMART SAMPLING
-        // Focus on target direction with minimal offsets
-        java.util.List<Double> yawOffsetList = new java.util.ArrayList<>();
-        yawOffsetList.add(0.0);
-        // Just test a few key offsets
-        for (double i = 2.0; i <= 8.0; i += 2.0) {
-            yawOffsetList.add(i);
-            yawOffsetList.add(-i);
-        }
-        // Test a couple wider angles
-        yawOffsetList.add(12.0);
-        yawOffsetList.add(-12.0);
-        yawOffsetList.add(18.0);
-        yawOffsetList.add(-18.0);
-        double[] yawOffsets = yawOffsetList.stream().mapToDouble(Double::doubleValue).toArray();
+        // Yaw offsets - MINIMAL (only most critical angles)
+        double[] yawOffsets = {0.0, -3.0, 3.0, -9.0, 9.0};
         
-        // Fast intelligent search with early exit when excellent solution found
-        // Target: <0.1 second computation time
+        // Ultra-fast candidate search - find few practical shots quickly
+        // Target: <0.1 second total from start to finish
+        int candidatesFound = 0;
         for (int s = 0; s <= speedSteps; s++) {
             double testSpeed = minSpeed + s * speedStep;
             if (testSpeed > maxSpeed) continue;
@@ -277,6 +276,8 @@ public class TurretTrajectoryTester {
                         config.robotPosition, testSpeed, testYaw, testPitch, spin);
                     
                     if (result.hitTarget) {
+                        candidatesFound++;
+                        
                         // Scoring based on user-specified priority order:
                         // 1. Accuracy (45%) - Entry quality, rim clearance, center-targeting
                         // 2. Ball flight time (25%) - Minimize time to target
@@ -322,34 +323,35 @@ public class TurretTrajectoryTester {
                             bestYaw = testYaw;
                             bestPitch = testPitch;
                             
-                            // Early exit if we found an excellent solution (fast mode)
-                            if (bestScore > EARLY_EXIT_THRESHOLD) {
+                            // Ultra-aggressive early exit: stop after finding good candidates
+                            if (bestScore > EARLY_EXIT_THRESHOLD || candidatesFound >= MAX_CANDIDATES_TO_FIND) {
                                 break;  // Exit yaw loop
                             }
                         }
                     }
                 }
                 
-                // Early exit if excellent solution found
-                if (bestScore > EARLY_EXIT_THRESHOLD) {
+                // Early exit if found enough good candidates
+                if (bestScore > EARLY_EXIT_THRESHOLD || candidatesFound >= MAX_CANDIDATES_TO_FIND) {
                     break;  // Exit pitch loop
                 }
             }
             
-            // Early exit if excellent solution found
-            if (bestScore > EARLY_EXIT_THRESHOLD) {
+            // Early exit if found enough good candidates
+            if (bestScore > EARLY_EXIT_THRESHOLD || candidatesFound >= MAX_CANDIDATES_TO_FIND) {
                 break;  // Exit speed loop
             }
         }
         
-        // Phase 2: Fine refinement around best solution (only if needed and time permits)
+        // Phase 2: Quick refinement only if best candidate isn't excellent
+        // Skip refinement if we already found a great solution
         if (bestResult != null && bestResult.hitTarget && bestScore < REFINEMENT_EXIT_THRESHOLD) {
-            // Fine-tune around the best solution with 1° precision
-            double fineSpeedStep = Math.max(0.5, (maxSpeed - minSpeed) / 20.0);
-            double[] finePitchOffsets = {0, -1.0, 1.0, -2.0, 2.0, -3.0, 3.0};
-            double[] fineYawOffsets = {0, -1.0, 1.0, -2.0, 2.0, -3.0, 3.0};
+            // Very quick refinement with minimal search space
+            double fineSpeedStep = Math.max(0.5, (maxSpeed - minSpeed) / 10.0);
+            double[] finePitchOffsets = {0, -2.0, 2.0};  // Only ±2° refinement
+            double[] fineYawOffsets = {0, -2.0, 2.0};    // Only ±2° refinement
             
-            for (double speedOffset = -2 * fineSpeedStep; speedOffset <= 2 * fineSpeedStep; speedOffset += fineSpeedStep) {
+            for (double speedOffset = -fineSpeedStep; speedOffset <= fineSpeedStep; speedOffset += fineSpeedStep) {
                 double testSpeed = bestSpeed + speedOffset;
                 if (testSpeed < minSpeed || testSpeed > maxSpeed) continue;
                 
