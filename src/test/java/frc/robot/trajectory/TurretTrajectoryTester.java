@@ -177,19 +177,20 @@ public class TurretTrajectoryTester {
         // First, try to find ANY trajectory that hits by comprehensive search
         // Search space: speeds from reasonable minimum to max, pitches around geometric estimate
         // For very close shots, use lower minimum speed; for long shots, ensure we search full range
+        // Determine minimum speed based on distance (practical heuristic)
         double minSpeed;
         if (distanceToTarget < 2.0) {
             // Very close shots need lower speeds to avoid overshooting
             minSpeed = Math.max(5.0, distanceToTarget * 3.0);
         } else if (distanceToTarget > 10.0) {
-            // Very long shots (10-20m) need to try higher speeds but start from reasonable baseline
-            minSpeed = Math.max(MIN_SPEED_FLOOR * 1.5, distanceToTarget * 1.2);
+            // Very long shots need higher minimum speeds
+            minSpeed = Math.max(12.0, distanceToTarget * 1.2);
         } else if (distanceToTarget > 7.0) {
-            // Long shots (7-10m) - use moderate starting speed
-            minSpeed = Math.max(MIN_SPEED_FLOOR, distanceToTarget * 1.0);
+            // Long shots (7-10m) - moderate starting speed
+            minSpeed = Math.max(10.0, distanceToTarget * 1.0);
         } else {
-            // Normal range (2-7m)
-            minSpeed = Math.max(MIN_SPEED_FLOOR, distanceToTarget * MIN_SPEED_FACTOR);
+            // Normal range (2-7m) - use distance-based estimate
+            minSpeed = Math.max(8.0, distanceToTarget * 0.8);
         }
         minSpeed = Math.min(minSpeed, maxSpeed);
         
