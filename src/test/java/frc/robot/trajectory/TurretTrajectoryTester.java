@@ -181,9 +181,18 @@ public class TurretTrajectoryTester {
         // For very close shots, use lower minimum speed; for longer shots within 17ft, ensure we search full range
         // Determine minimum speed based on distance (practical heuristic for 17ft max range)
         double minSpeed;
-        if (distanceToTarget < 0.6) {
-            // Very close shots (< 2 feet) need lower speeds to avoid overshooting
-            minSpeed = Math.max(3.0, distanceToTarget * 5.0);
+        if (distanceToTarget < 0.3) {
+            // Extreme ultra-close (<0.3m) - MINIMAL speed for near-vertical drops
+            minSpeed = 1.5;
+        } else if (distanceToTarget < 0.6) {
+            // Very ultra-close (0.3-0.6m) - VERY low speed for 80-85° trajectories
+            minSpeed = Math.max(1.8, distanceToTarget * 2.5);
+        } else if (distanceToTarget < 1.0) {
+            // Ultra-close (0.6-1.0m) - low speed for 75-80° trajectories  
+            minSpeed = Math.max(2.0, distanceToTarget * 2.2);
+        } else if (distanceToTarget < 1.5) {
+            // Very close (1.0-1.5m) - moderate-low speed for 65-75° trajectories
+            minSpeed = Math.max(2.5, distanceToTarget * 2.0);
         } else if (distanceToTarget > 4.27) {
             // Beyond 14 feet - use higher minimum speeds for extended range
             minSpeed = Math.max(7.5, distanceToTarget * 1.5);
@@ -196,12 +205,9 @@ public class TurretTrajectoryTester {
         } else if (distanceToTarget > 2.4) {
             // 8-10 feet range - moderate speed
             minSpeed = Math.max(6.0, distanceToTarget * 2.0);
-        } else if (distanceToTarget > 1.5) {
-            // 5-8 feet range - moderate-low speed
-            minSpeed = Math.max(5.0, distanceToTarget * 2.5);
         } else {
-            // 2-5 feet range - normal speed calculation
-            minSpeed = Math.max(4.0, distanceToTarget * 3.0);
+            // 1.5-2.4m (5-8 feet) range - moderate-low speed
+            minSpeed = Math.max(4.5, distanceToTarget * 2.5);
         }
         minSpeed = Math.min(minSpeed, maxSpeed);
         
@@ -229,10 +235,16 @@ public class TurretTrajectoryTester {
         }
         
         // Add more practical angles based on distance for better coverage
-        // Optimized for 17 feet max range to ensure 100% success rate
-        if (distanceToTarget < 0.46) {
-            // Ultra-close (< 1.5 feet): comprehensive steep angle coverage
-            for (double angle = 60.0; angle <= 85.0; angle += 3.0) {
+        // Optimized for 5.5m max range to ensure 100% success rate
+        if (distanceToTarget < 1.0) {
+            // EXTREME ultra-close (< 1.0m): VERY comprehensive ULTRA-steep angle coverage
+            // Need 70-88° for distances 0.5-1.0m, with finer steps
+            for (double angle = 68.0; angle <= 88.0; angle += 1.5) {
+                pitchAngleSet.add(angle);
+            }
+        } else if (distanceToTarget < 1.5) {
+            // Ultra-close (1.0-1.5m): comprehensive steep angle coverage
+            for (double angle = 65.0; angle <= 85.0; angle += 2.0) {
                 pitchAngleSet.add(angle);
             }
         } else if (distanceToTarget < 1.22) {
@@ -261,8 +273,18 @@ public class TurretTrajectoryTester {
         Double[] pitchAngles = pitchAngleSet.toArray(new Double[0]);
         java.util.Arrays.sort(pitchAngles);
         
-        // Speed configuration - MINIMAL (only critical speeds)
-        int speedSteps = FAST_SPEED_STEPS;
+        // Speed configuration - MORE steps for ultra-close shots
+        int speedSteps;
+        if (distanceToTarget < 1.0) {
+            // Ultra-close: need many more speed steps to find the sweet spot
+            speedSteps = 20;
+        } else if (distanceToTarget < 1.5) {
+            // Very close: more steps
+            speedSteps = 15;
+        } else {
+            // Normal: standard steps
+            speedSteps = FAST_SPEED_STEPS;
+        }
         double speedStep = (maxSpeed - minSpeed) / speedSteps;
         
         // Yaw offsets - MORE COMPREHENSIVE for 100% success
