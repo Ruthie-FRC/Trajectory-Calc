@@ -99,6 +99,7 @@ public class HubGeometry {
     /**
      * Evaluate entry quality - returns a score (higher is better).
      * Considers entry angle, vertical velocity, and position margin.
+     * OPTIMIZED FOR CENTER SHOTS - heavily rewards aiming for center.
      */
     public double evaluateEntry(ProjectileState state) {
         // Distance from center (in XY plane)
@@ -106,18 +107,28 @@ public class HubGeometry {
         double dy = state.position.y - center.y;
         double distFromCenter = Math.sqrt(dx * dx + dy * dy);
         
-        // Margin score (prefer center entries)
+        // Margin score (HEAVILY prefer center entries)
+        // Use exponential falloff to strongly favor center shots
         double maxRadius = openingFlatToFlat / 2.0;
-        double marginScore = (maxRadius - distFromCenter) / maxRadius;
-        marginScore = Math.max(0, Math.min(1, marginScore));
+        double normalizedDist = distFromCenter / maxRadius;
         
-        // Velocity score (prefer downward velocity)
+        // Exponential scoring: center (0) gets 1.0, edge (1.0) gets 0.0
+        // Using quadratic falloff for strong center preference
+        double marginScore = Math.max(0, 1.0 - normalizedDist * normalizedDist);
+        
+        // Extra bonus for being in center 40% of opening
+        double centerBonus = 0.0;
+        if (distFromCenter < maxRadius * 0.4) {
+            centerBonus = 0.2 * (1.0 - (distFromCenter / (maxRadius * 0.4)));
+        }
+        
+        // Velocity score (prefer good downward velocity)
         double vzScore = 0.0;
         if (state.velocity.z < 0) {
             vzScore = Math.min(1.0, -state.velocity.z / PhysicsConstants.DEFAULT_MAX_VERTICAL_VELOCITY);
         }
         
-        // Entry angle score (prefer near-vertical)
+        // Entry angle score (prefer near-vertical for accuracy)
         double speed = state.velocity.magnitude();
         double entryAngle = 0;
         if (speed > 0.1) {
@@ -125,8 +136,8 @@ public class HubGeometry {
         }
         double angleScore = Math.max(0, 1.0 - entryAngle / PhysicsConstants.DEFAULT_MAX_ENTRY_ANGLE_DEG);
         
-        // Combined score
-        return marginScore * 0.5 + vzScore * 0.3 + angleScore * 0.2;
+        // Combined score - heavily weighted toward center position (60%)
+        return marginScore * 0.50 + centerBonus + vzScore * 0.25 + angleScore * 0.25;
     }
     
     public Vector3D getCenter() {
