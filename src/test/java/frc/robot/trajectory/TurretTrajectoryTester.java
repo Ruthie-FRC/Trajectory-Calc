@@ -30,10 +30,12 @@ public class TurretTrajectoryTester {
     private final double defaultSpinRate;
     private final double wheelDiameterMeters = 0.1016; // 4 inches
     
-    // Speed search heuristics
-    private static final double MIN_SPEED_FACTOR = 0.8; // Minimum speed as fraction of distance
-    private static final double MIN_SPEED_FLOOR = 8.0; // Absolute minimum speed in m/s
-    private static final int SPEED_SEARCH_STEPS = 20; // Number of speeds to try
+    // Fast search heuristics (optimized for <0.1 second computation)
+    private static final double GEOMETRIC_SEARCH_RANGE_DEG = 15.0; // Search range around geometric estimate
+    private static final double GEOMETRIC_SEARCH_STEP_DEG = 3.0;   // Step size for geometric search
+    private static final int FAST_SPEED_STEPS = 8;                  // Number of speeds to try in fast mode
+    private static final double EARLY_EXIT_THRESHOLD = 0.85;        // Exit when solution score exceeds this
+    private static final double REFINEMENT_EXIT_THRESHOLD = 0.90;   // Exit refinement phase at this score
     
     /**
      * Configuration for a test scenario.
@@ -202,8 +204,8 @@ public class TurretTrajectoryTester {
         // Use smart heuristics around geometric estimate with coarse sampling
         java.util.Set<Double> pitchAngleSet = new java.util.HashSet<>();
         
-        // Smart sampling: test geometric estimate ±15° with 3° steps
-        for (double offset = -15.0; offset <= 15.0; offset += 3.0) {
+        // Smart sampling: test geometric estimate with configured range and step
+        for (double offset = -GEOMETRIC_SEARCH_RANGE_DEG; offset <= GEOMETRIC_SEARCH_RANGE_DEG; offset += GEOMETRIC_SEARCH_STEP_DEG) {
             double angle = geometricPitch + offset;
             if (angle >= 5.0 && angle <= 85.0) {
                 pitchAngleSet.add(angle);
@@ -239,7 +241,7 @@ public class TurretTrajectoryTester {
         java.util.Arrays.sort(pitchAngles);
         
         // Speed configuration - FAST (minimal steps)
-        int speedSteps = 8;  // Just enough for good coverage
+        int speedSteps = FAST_SPEED_STEPS;
         double speedStep = (maxSpeed - minSpeed) / speedSteps;
         
         // Yaw offsets - MINIMAL SMART SAMPLING
@@ -321,7 +323,7 @@ public class TurretTrajectoryTester {
                             bestPitch = testPitch;
                             
                             // Early exit if we found an excellent solution (fast mode)
-                            if (bestScore > 0.85) {
+                            if (bestScore > EARLY_EXIT_THRESHOLD) {
                                 break;  // Exit yaw loop
                             }
                         }
@@ -329,19 +331,19 @@ public class TurretTrajectoryTester {
                 }
                 
                 // Early exit if excellent solution found
-                if (bestScore > 0.85) {
+                if (bestScore > EARLY_EXIT_THRESHOLD) {
                     break;  // Exit pitch loop
                 }
             }
             
             // Early exit if excellent solution found
-            if (bestScore > 0.85) {
+            if (bestScore > EARLY_EXIT_THRESHOLD) {
                 break;  // Exit speed loop
             }
         }
         
         // Phase 2: Fine refinement around best solution (only if needed and time permits)
-        if (bestResult != null && bestResult.hitTarget && bestScore < 0.90) {
+        if (bestResult != null && bestResult.hitTarget && bestScore < REFINEMENT_EXIT_THRESHOLD) {
             // Fine-tune around the best solution with 1° precision
             double fineSpeedStep = Math.max(0.5, (maxSpeed - minSpeed) / 20.0);
             double[] finePitchOffsets = {0, -1.0, 1.0, -2.0, 2.0, -3.0, 3.0};
@@ -383,15 +385,15 @@ public class TurretTrajectoryTester {
                                 bestPitch = testPitch;
                                 
                                 // Early exit if excellent
-                                if (bestScore > 0.90) {
+                                if (bestScore > REFINEMENT_EXIT_THRESHOLD) {
                                     break;
                                 }
                             }
                         }
                     }
-                    if (bestScore > 0.90) break;
+                    if (bestScore > REFINEMENT_EXIT_THRESHOLD) break;
                 }
-                if (bestScore > 0.90) break;
+                if (bestScore > REFINEMENT_EXIT_THRESHOLD) break;
             }
         }
         
