@@ -29,14 +29,14 @@ public class TurretTrajectoryTester {
     private final double maxBallSpeedMS;  // Maximum ball speed in meters per second
     private final double defaultSpinRate;
     
-    // Optimized search for 100% success rate with ultra-fast computation (<0.05s)
-    // Strategy: Smart comprehensive search - test practical angles efficiently
-    private static final double GEOMETRIC_SEARCH_RANGE_DEG = 20.0; // Wider search range for reliability
-    private static final double GEOMETRIC_SEARCH_STEP_DEG = 3.0;   // Finer step size for better coverage
-    private static final int FAST_SPEED_STEPS = 10;                 // More speed steps for 100% coverage
-    private static final double EARLY_EXIT_THRESHOLD = 0.88;        // Higher threshold for faster termination
-    private static final int MAX_CANDIDATES_TO_FIND = 8;            // Reduced for faster search
-    private static final double REFINEMENT_EXIT_THRESHOLD = 0.90;   // Only refine if best score below this
+    // Optimized search for 100% success rate with FAST computation
+    // Strategy: Smart search with aggressive early exit
+    private static final double GEOMETRIC_SEARCH_RANGE_DEG = 18.0; // Balanced search range
+    private static final double GEOMETRIC_SEARCH_STEP_DEG = 3.5;   // Slightly coarser for speed
+    private static final int FAST_SPEED_STEPS = 8;                 // Reduced for speed
+    private static final double EARLY_EXIT_THRESHOLD = 0.80;       // Lower for faster exit
+    private static final int MAX_CANDIDATES_TO_FIND = 3;           // Find good solution quickly
+    private static final double REFINEMENT_EXIT_THRESHOLD = 0.83;  // Skip refinement sooner
     
     /**
      * Configuration for a test scenario.
@@ -238,31 +238,25 @@ public class TurretTrajectoryTester {
         
         // Add more practical angles based on distance for better coverage
         // Optimized for 4.877m (16 feet) max range to ensure 100% success rate
-        if (distanceToTarget < 1.0) {
-            // EXTREME ultra-close (< 1.0m): ULTRA-comprehensive ULTRA-steep angle coverage
-            // Need 70-89° for distances 0.7-1.0m, with ultra-fine steps
-            for (double angle = 70.0; angle <= 89.0; angle += 0.5) {
-                pitchAngleSet.add(angle);
-            }
-        } else if (distanceToTarget < 1.7) {
-            // Ultra-close (1.0-1.7m): comprehensive steep angle coverage
-            // Critical range that was failing - needs very fine coverage
-            for (double angle = 60.0; angle <= 87.0; angle += 1.0) {
+        // Now >1.0m minimum, so we can use coarser steps
+        if (distanceToTarget < 1.7) {
+            // Close (1.0-1.7m): steep angle coverage with balanced granularity
+            for (double angle = 60.0; angle <= 87.0; angle += 1.5) {
                 pitchAngleSet.add(angle);
             }
         } else if (distanceToTarget < 2.13) {
-            // Medium (1.7-7 feet): comprehensive mid-range coverage
-            for (double angle = 30.0; angle <= 70.0; angle += 2.5) {
+            // Medium (1.7-7 feet): mid-range coverage
+            for (double angle = 30.0; angle <= 70.0; angle += 3.0) {
                 pitchAngleSet.add(angle);
             }
         } else if (distanceToTarget < 3.66) {
-            // Long (7-12 feet): comprehensive optimal trajectory coverage
-            for (double angle = 20.0; angle <= 65.0; angle += 3.0) {
+            // Long (7-12 feet): optimal trajectory coverage
+            for (double angle = 20.0; angle <= 65.0; angle += 3.5) {
                 pitchAngleSet.add(angle);
             }
         } else {
-            // Very long (12-16 feet): comprehensive extended range coverage
-            for (double angle = 15.0; angle <= 60.0; angle += 3.0) {
+            // Very long (12-16 feet): extended range coverage
+            for (double angle = 15.0; angle <= 60.0; angle += 4.0) {
                 pitchAngleSet.add(angle);
             }
         }
@@ -271,23 +265,19 @@ public class TurretTrajectoryTester {
         Double[] pitchAngles = pitchAngleSet.toArray(new Double[0]);
         java.util.Arrays.sort(pitchAngles);
         
-        // Speed configuration - MORE steps for ultra-close shots
+        // Speed configuration - optimized for speed while maintaining accuracy
         int speedSteps;
-        if (distanceToTarget < 1.0) {
-            // Ultra-close: need MANY more speed steps to find the ultra-precise sweet spot
-            speedSteps = 30;  // Increased for better coverage
-        } else if (distanceToTarget < 1.7) {
-            // Very close: more steps - critical range
-            speedSteps = 20;
+        if (distanceToTarget < 1.7) {
+            // Close range: moderate steps
+            speedSteps = 12;
         } else {
             // Normal: standard steps
             speedSteps = FAST_SPEED_STEPS;
         }
         double speedStep = (maxSpeed - minSpeed) / speedSteps;
         
-        // Yaw offsets - OPTIMIZED for speed: fewer angles while maintaining coverage
-        // Reduced from 13 to 9 for faster computation
-        double[] yawOffsets = {0.0, -2.0, 2.0, -4.0, 4.0, -7.0, 7.0, -10.0, 10.0};
+        // Yaw offsets - reduced for faster computation
+        double[] yawOffsets = {0.0, -2.0, 2.0, -5.0, 5.0, -8.0, 8.0};
         
         // Comprehensive candidate search - ensure 100% success rate
         // Target: <0.1 second total while finding ALL viable shots
@@ -377,13 +367,13 @@ public class TurretTrajectoryTester {
             }
         }
         
-        // Phase 2: Refinement for near-perfect accuracy
-        // More thorough refinement to ensure we find the absolute best
-        if (bestResult != null && bestResult.hitTarget && bestScore < REFINEMENT_EXIT_THRESHOLD) {
-            // More comprehensive refinement with finer steps
-            double fineSpeedStep = Math.max(0.3, (maxSpeed - minSpeed) / 15.0);
-            double[] finePitchOffsets = {0, -1.5, 1.5, -3.0, 3.0};  // ±3° refinement with finer steps
-            double[] fineYawOffsets = {0, -1.5, 1.5, -3.0, 3.0};    // ±3° refinement with finer steps
+        // Phase 2: Refinement - simplified for speed
+        // Only refine if we have a marginal solution
+        if (bestResult != null && bestResult.hitTarget && bestScore < REFINEMENT_EXIT_THRESHOLD && bestScore > 0.65) {
+            // Minimal refinement with coarse steps for speed
+            double fineSpeedStep = Math.max(0.5, (maxSpeed - minSpeed) / 10.0);
+            double[] finePitchOffsets = {0, -2.0, 2.0};  // ±2° only
+            double[] fineYawOffsets = {0, -2.0, 2.0};    // ±2° only
             
             for (double speedOffset = -fineSpeedStep; speedOffset <= fineSpeedStep; speedOffset += fineSpeedStep) {
                 double testSpeed = bestSpeed + speedOffset;
