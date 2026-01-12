@@ -1,0 +1,192 @@
+# ========================================
+# TRAJECTORY TEST TARGETS - 10 FEET RANGE
+# ========================================
+# This file contains test scenarios within 10 feet (3.048 meters) range.
+# Max ball speed: 30 ft/s (9.144 m/s)
+# Focus: Accuracy, Precision, Rim Clearance, Center-targeting
+#
+# FORMAT (each section on separate lines for readability):
+#   ROBOT_XY:              x, y (meters on field - shooter height is constant at 0.5m)
+#   CURRENT_TURRET_DEGREE: yaw (0-360°, where 0° = robot forward)
+#   CURRENT_HOOD_DEGREE:   pitch (0-90°, where 0° = horizontal, 90° = vertical)
+#   ---
+#
+# TARGET INFORMATION:
+#   - Target is ALWAYS at field origin (0, 0) with height 1.83m (HUB center)
+#   - HUB opening: 41.7in (~1.06m) hexagonal
+#   - Shooter height: constant at 0.5m (~half foot from ground)
+#   - MUST CLEAR RIM vertically and aim for CENTER of target
+#
+# Lines starting with # are comments and will be ignored.
+# ========================================
+
+
+# ========================================
+# ULTRA-CLOSE RANGE (1-3 feet / 0.3-0.9m)
+# ========================================
+
+# Scenario 1: 1 foot straight ahead
+ROBOT_XY:              0.3048, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   45
+---
+
+# Scenario 2: 2 feet straight ahead
+ROBOT_XY:              0.6096, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   45
+---
+
+# Scenario 3: 3 feet straight ahead
+ROBOT_XY:              0.9144, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   45
+---
+
+# Scenario 4: 2 feet at 45 degrees
+ROBOT_XY:              0.4314, 0.4314
+CURRENT_TURRET_DEGREE: 45
+CURRENT_HOOD_DEGREE:   50
+---
+
+# ========================================
+# CLOSE RANGE (4-6 feet / 1.2-1.8m)
+# ========================================
+
+# Scenario 5: 4 feet straight ahead
+ROBOT_XY:              1.2192, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   40
+---
+
+# Scenario 6: 5 feet straight ahead
+ROBOT_XY:              1.524, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   40
+---
+
+# Scenario 7: 6 feet straight ahead
+ROBOT_XY:              1.8288, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   38
+---
+
+# Scenario 8: 5 feet at 30 degrees
+ROBOT_XY:              1.319, 0.762
+CURRENT_TURRET_DEGREE: 30
+CURRENT_HOOD_DEGREE:   40
+---
+
+# Scenario 9: 5 feet at 60 degrees
+ROBOT_XY:              0.762, 1.319
+CURRENT_TURRET_DEGREE: 60
+CURRENT_HOOD_DEGREE:   40
+---
+
+# ========================================
+# MEDIUM RANGE (7-9 feet / 2.1-2.7m)
+# ========================================
+
+# Scenario 10: 7 feet straight ahead
+ROBOT_XY:              2.1336, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   35
+---
+
+# Scenario 11: 8 feet straight ahead
+ROBOT_XY:              2.4384, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   35
+---
+
+# Scenario 12: 9 feet straight ahead
+ROBOT_XY:              2.7432, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   33
+---
+
+# Scenario 13: 8 feet at 45 degrees
+ROBOT_XY:              1.7243, 1.7243
+CURRENT_TURRET_DEGREE: 45
+CURRENT_HOOD_DEGREE:   35
+---
+
+# Scenario 14: 7 feet perpendicular (sideways)
+ROBOT_XY:              0.0, 2.1336
+CURRENT_TURRET_DEGREE: 90
+CURRENT_HOOD_DEGREE:   36
+---
+
+# ========================================
+# MAXIMUM RANGE (10 feet / 3.048m)
+# ========================================
+
+# Scenario 15: Exactly 10 feet straight ahead
+ROBOT_XY:              3.048, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   32
+---
+
+# Scenario 16: 10 feet at 30 degrees
+ROBOT_XY:              2.639, 1.524
+CURRENT_TURRET_DEGREE: 30
+CURRENT_HOOD_DEGREE:   32
+---
+
+# Scenario 17: 10 feet at 45 degrees (diagonal)
+ROBOT_XY:              2.155, 2.155
+CURRENT_TURRET_DEGREE: 45
+CURRENT_HOOD_DEGREE:   32
+---
+
+# Scenario 18: 10 feet at 60 degrees
+ROBOT_XY:              1.524, 2.639
+CURRENT_TURRET_DEGREE: 60
+CURRENT_HOOD_DEGREE:   32
+---
+
+# Scenario 19: 10 feet perpendicular
+ROBOT_XY:              0.0, 3.048
+CURRENT_TURRET_DEGREE: 90
+CURRENT_HOOD_DEGREE:   33
+---
+
+# Scenario 20: 10 feet from behind (180 degrees)
+ROBOT_XY:              -3.048, 0.0
+CURRENT_TURRET_DEGREE: 180
+CURRENT_HOOD_DEGREE:   33
+---
+
+# ========================================
+# EDGE CASES - Various positions within 10 feet
+# ========================================
+
+# Scenario 21: Close diagonal (3ft x, 4ft y = 5ft total)
+ROBOT_XY:              0.9144, 1.2192
+CURRENT_TURRET_DEGREE: 53
+CURRENT_HOOD_DEGREE:   40
+---
+
+# Scenario 22: Medium diagonal (6ft x, 8ft y = 10ft total)
+ROBOT_XY:              1.8288, 2.4384
+CURRENT_TURRET_DEGREE: 53
+CURRENT_HOOD_DEGREE:   32
+---
+
+# Scenario 23: Very close at 90 degrees (2ft sideways)
+ROBOT_XY:              0.0, 0.6096
+CURRENT_TURRET_DEGREE: 90
+CURRENT_HOOD_DEGREE:   50
+---
+
+# Scenario 24: 8 feet at 135 degrees (behind-side)
+ROBOT_XY:              -1.7243, 1.7243
+CURRENT_TURRET_DEGREE: 135
+CURRENT_HOOD_DEGREE:   35
+---
+
+# Scenario 25: 5 feet at 270 degrees (other side)
+ROBOT_XY:              0.0, -1.524
+CURRENT_TURRET_DEGREE: 270
+CURRENT_HOOD_DEGREE:   40
+---
