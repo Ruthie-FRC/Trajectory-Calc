@@ -229,7 +229,9 @@ public class TurretTrajectoryTester {
         // Smart sampling around geometric estimate (fewer angles)
         for (double offset = -GEOMETRIC_SEARCH_RANGE_DEG; offset <= GEOMETRIC_SEARCH_RANGE_DEG; offset += GEOMETRIC_SEARCH_STEP_DEG) {
             double angle = geometricPitch + offset;
-            if (angle >= 5.0 && angle <= 85.0) {
+            // Allow up to 89° for ultra-close shots
+            double maxAngle = (distanceToTarget < 1.0) ? 89.0 : 85.0;
+            if (angle >= 5.0 && angle <= maxAngle) {
                 pitchAngleSet.add(angle);
             }
         }
@@ -299,7 +301,9 @@ public class TurretTrajectoryTester {
             if (testSpeed > maxSpeed) continue;
             
             for (double testPitch : pitchAngles) {
-                if (testPitch < 5.0 || testPitch > 85.0) continue;
+                // Allow steeper angles for ultra-close shots
+                double maxAllowedPitch = (distanceToTarget < 1.0) ? 89.0 : 85.0;
+                if (testPitch < 5.0 || testPitch > maxAllowedPitch) continue;
                 
                 for (double yawOffset : yawOffsets) {
                     double testYaw = targetYaw + yawOffset;
