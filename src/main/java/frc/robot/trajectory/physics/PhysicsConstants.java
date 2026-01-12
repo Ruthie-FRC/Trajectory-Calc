@@ -23,7 +23,8 @@ public class PhysicsConstants {
     
     // Default calibration values
     public static final double DEFAULT_DRAG_COEFFICIENT = 0.47; // typical for smooth sphere
-    public static final double DEFAULT_MAGNUS_COEFFICIENT = 0.00015; // tunable parameter for Magnus effect    public static final double DEFAULT_RESTITUTION_COEFFICIENT = 0.6; // bounce coefficient
+    public static final double DEFAULT_MAGNUS_COEFFICIENT = 0.00015; // tunable parameter for Magnus effect
+    public static final double DEFAULT_RESTITUTION_COEFFICIENT = 0.6; // bounce coefficient
     public static final double DEFAULT_FRICTION_COEFFICIENT = 0.3; // rolling/sliding friction
     public static final double DEFAULT_SPEED_EFFICIENCY = 0.95; // launch speed efficiency
     public static final double DEFAULT_SPIN_EFFICIENCY = 0.90; // spin efficiency
