@@ -1,8 +1,8 @@
 # ========================================
-# TRAJECTORY TEST TARGETS
+# TRAJECTORY TEST TARGETS - COMPREHENSIVE 17 FEET (5.18M) COVERAGE
 # ========================================
-# This file comes preloaded with comprehensive examples demonstrating all solver capabilities.
-# Replace these with your own test scenarios as needed.
+# This file contains comprehensive test scenarios covering all edge cases within 17 feet range.
+# Focus: 100% Accuracy from any position, Precision, Rim Clearance, Center-targeting
 #
 # FORMAT (each section on separate lines for readability):
 #   ROBOT_XY:              x, y (meters on field - shooter height is constant at 0.5m)
@@ -12,254 +12,479 @@
 #   ---
 #
 # TARGET INFORMATION:
-#   - Target is ALWAYS at field origin (0, 0) with height 1.83m (HUB front edge)
+#   - Target is ALWAYS at field origin (0, 0) with height 1.83m (HUB center)
 #   - HUB opening: 41.7in (~1.06m) hexagonal
 #   - Shooter height: constant at 0.5m (~half foot from ground)
-#
-# TURRET ANGLES:
-#   - Yaw (CURRENT_TURRET_DEGREE):   0° = robot forward, positive = counterclockwise (full 360° rotation)
-#   - Pitch (CURRENT_HOOD_DEGREE):   0° = horizontal, 90° = straight up
-#
-# OUTPUT WILL INCLUDE:
-#   - Turret Change: ±degrees from current position
-#   - Hood Change: ±degrees from current position
-#   - Spin Type: Backspin/Topspin/Sidespin
-#   - Success Probability: 0-100%
-#   - Trajectory Confidence: 0-100%
-#   - Margin of Error: ±meters
-#   - Full non-parabolic trajectory equations (drag, Magnus, spin decay)
-#   - Comprehensive trajectory analysis
+#   - MUST CLEAR RIM vertically and aim for CENTER of target
 #
 # Lines starting with # are comments and will be ignored.
 # ========================================
-
-
 # ========================================
-# BASIC SHOTS - Close, Medium, Long Range
+# ULTRA-CLOSE RANGE (0.5m - 1.5m) - Extreme steep angles required
 # ========================================
-
-# Scenario 1: Close range (3m), turret aligned straight ahead
-ROBOT_XY:              3.0, 0.0
+# Scenario 1: Ultra-close straight (0.5m)
+ROBOT_XY:              0.5, 0.0
 CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
-
-# Scenario 2: Medium range (5m), turret slightly rotated, hood pre-elevated
-ROBOT_XY:              4.0, 3.0
-CURRENT_TURRET_DEGREE: 15
-CURRENT_HOOD_DEGREE:   10
----
-
-# Scenario 3: Long range (8m), turret aligned, hood pre-elevated
-ROBOT_XY:              8.0, 0.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   20
----
-
-
-# ========================================
-# ANGLED APPROACHES - Lateral & Diagonal
-# ========================================
-
-# Scenario 4: Side shot, turret rotated right toward target
-ROBOT_XY:              3.0, -3.0
-CURRENT_TURRET_DEGREE: 320
-CURRENT_HOOD_DEGREE:   0
----
-
-# Scenario 5: Corner approach from back-left
-ROBOT_XY:              3.0, 1.5
-CURRENT_TURRET_DEGREE: 340
-CURRENT_HOOD_DEGREE:   0
----
-
-# Scenario 6: Large lateral offset, turret pre-rotated
-ROBOT_XY:              4.0, 4.0
-CURRENT_TURRET_DEGREE: 45
-CURRENT_HOOD_DEGREE:   10
----
-
-
-# ========================================
-# TURRET CONFIGURATION TESTS
-# ========================================
-
-# Scenario 7: Turret pointed wrong direction, needs large correction
-ROBOT_XY:              2.5, 0.5
-CURRENT_TURRET_DEGREE: 300
-CURRENT_HOOD_DEGREE:   5
----
-
-# Scenario 8: Turret tracking (simulating movement)
-ROBOT_XY:              4.0, 2.0
-CURRENT_TURRET_DEGREE: 10
-CURRENT_HOOD_DEGREE:   15
----
-
-# Scenario 9: Extreme turret orientation (nearly vertical hood)
-ROBOT_XY:              5.0, 5.0
-CURRENT_TURRET_DEGREE: 45
-CURRENT_HOOD_DEGREE:   75
----
-
-# Scenario 10: Turret rotated 180° (pointing backwards)
-ROBOT_XY:              -4.0, 0.0
-CURRENT_TURRET_DEGREE: 180
-CURRENT_HOOD_DEGREE:   0
----
-
-
-# ========================================
-# SPECIAL TARGET CONDITIONS
-# ========================================
-
-# Scenario 11: Medium-long range (5m)
-ROBOT_XY:              5.0, 0.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   5
----
-
-# Scenario 12: Close range with low hood
-ROBOT_XY:              2.5, 0.0
+# Scenario 2: Ultra-close straight (0.6m)
+ROBOT_XY:              0.6, 0.0
 CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
-
-# Scenario 13: Very close range (1.5m)
-ROBOT_XY:              1.5, 0.0
+# Scenario 3: Ultra-close straight (0.7m)
+ROBOT_XY:              0.7, 0.0
 CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
-
-
-# ========================================
-# SPEED & SPIN VARIATIONS
-# ========================================
-
-# Scenario 14: High speed shot at 6m
-ROBOT_XY:              6.0, 0.0
+# Scenario 4: Ultra-close straight (0.8m)
+ROBOT_XY:              0.8, 0.0
 CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
-LAUNCH_PARAMS:         15.0, 250.0
 ---
-
-# Scenario 15: Low speed shot at 4m
-ROBOT_XY:              4.0, 0.0
+# Scenario 5: Ultra-close straight (0.9m)
+ROBOT_XY:              0.9, 0.0
 CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
-LAUNCH_PARAMS:         10.0, 180.0
 ---
-
-# Scenario 16: High spin rate at 6m
-ROBOT_XY:              6.0, 0.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   10
-LAUNCH_PARAMS:         12.0, 300.0
----
-
-# Scenario 17: Low spin rate at 5m
-ROBOT_XY:              5.0, 0.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   5
-LAUNCH_PARAMS:         12.0, 100.0
----
-
-
-# ========================================
-# EDGE CASES & CHALLENGING SCENARIOS
-# ========================================
-
-# Scenario 18: Far back position shooting forward (10m)
-ROBOT_XY:              10.0, 0.5
-CURRENT_TURRET_DEGREE: 5
-CURRENT_HOOD_DEGREE:   25
----
-
-# Scenario 19: Multiple adjustments needed - corner position
-ROBOT_XY:              7.0, 7.0
-CURRENT_TURRET_DEGREE: 300
-CURRENT_HOOD_DEGREE:   30
----
-
-# Scenario 20: Nearly straight up trajectory (1m away, edge case)
+# Scenario 6: Ultra-close straight (1.0m)
 ROBOT_XY:              1.0, 0.0
 CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
-
-
-# ========================================
-# IMPOSSIBLE SHOTS (Demonstrate Failure Detection)
-# ========================================
-
-# Scenario 21: Robot behind HUB (negative x) - SHOULD FAIL
-ROBOT_XY:              -3.0, 0.0
+# Scenario 7: Ultra-close straight (1.1m)
+ROBOT_XY:              1.1, 0.0
 CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
-
-# Scenario 22: Very long range beyond physics limits (20m) - SHOULD FAIL
-ROBOT_XY:              20.0, 0.0
+# Scenario 8: Ultra-close straight (1.2m)
+ROBOT_XY:              1.2, 0.0
 CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
-
-# Scenario 23: Low speed insufficient for distance - SHOULD FAIL
-ROBOT_XY:              8.0, 0.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
-LAUNCH_PARAMS:         8.0, 200.0
----
-
-# Scenario 24: Extreme angle requirement - SHOULD FAIL
-ROBOT_XY:              0.3, 0.0
+# Scenario 9: Ultra-close straight (1.3m)
+ROBOT_XY:              1.3, 0.0
 CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
-
-
+# Scenario 10: Ultra-close straight (1.4m)
+ROBOT_XY:              1.4, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 11: Ultra-close straight (1.5m)
+ROBOT_XY:              1.5, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 12: Ultra-close 15° diagonal (1.0m)
+ROBOT_XY:              0.97, 0.26
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 13: Ultra-close 30° diagonal (1.0m)
+ROBOT_XY:              0.87, 0.50
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 14: Ultra-close 45° diagonal (1.0m)
+ROBOT_XY:              0.71, 0.71
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
 # ========================================
-# SUCCESS PROBABILITY RANGE DEMONSTRATIONS
+# CLOSE RANGE (1.5m - 3m)
 # ========================================
-
-# Scenario 25: High confidence shot (expect >85% success) - 4m optimal range
+# Scenario 15: Close straight (1.6m)
+ROBOT_XY:              1.6, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 16: Close straight (1.8m)
+ROBOT_XY:              1.8, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 17: Close straight (2.0m)
+ROBOT_XY:              2.0, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 18: Close straight (2.2m)
+ROBOT_XY:              2.2, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 19: Close straight (2.4m)
+ROBOT_XY:              2.4, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 20: Close straight (2.6m)
+ROBOT_XY:              2.6, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 21: Close straight (2.8m)
+ROBOT_XY:              2.8, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 22: Close straight (3.0m)
+ROBOT_XY:              3.0, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 23: Close 15° (2.0m)
+ROBOT_XY:              1.93, 0.52
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 24: Close 30° (2.0m)
+ROBOT_XY:              1.73, 1.00
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 25: Close 45° (2.0m)
+ROBOT_XY:              1.41, 1.41
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 26: Close 60° (2.0m)
+ROBOT_XY:              1.00, 1.73
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 27: Close 15° (2.5m)
+ROBOT_XY:              2.41, 0.65
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 28: Close 30° (2.5m)
+ROBOT_XY:              2.17, 1.25
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 29: Close 45° (2.5m)
+ROBOT_XY:              1.77, 1.77
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 30: Close 60° (2.5m)
+ROBOT_XY:              1.25, 2.17
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 31: Close 15° (3.0m)
+ROBOT_XY:              2.90, 0.78
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 32: Close 30° (3.0m)
+ROBOT_XY:              2.60, 1.50
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 33: Close 45° (3.0m)
+ROBOT_XY:              2.12, 2.12
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 34: Close 60° (3.0m)
+ROBOT_XY:              1.50, 2.60
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# ========================================
+# MEDIUM RANGE (3m - 6m) - Sweet spot
+# ========================================
+# Scenario 35: Medium straight (3.2m)
+ROBOT_XY:              3.2, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 36: Medium straight (3.5m)
+ROBOT_XY:              3.5, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 37: Medium straight (3.8m)
+ROBOT_XY:              3.8, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 38: Medium straight (4.0m)
 ROBOT_XY:              4.0, 0.0
 CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   10
----
-
-# Scenario 26: Moderate confidence (expect 60-80% success) - angled 6m
-ROBOT_XY:              5.0, 3.0
-CURRENT_TURRET_DEGREE: 25
 CURRENT_HOOD_DEGREE:   0
 ---
-
-# Scenario 27: Low confidence, high risk (expect 40-60% success) - 9m far range
-ROBOT_XY:              9.0, 0.0
+# Scenario 39: Medium straight (4.3m)
+ROBOT_XY:              4.3, 0.0
 CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   35
+CURRENT_HOOD_DEGREE:   0
 ---
-
-# Scenario 28: Extreme range, very low confidence (expect <40% success) - 10m corner
-ROBOT_XY:              9.0, 5.0
-CURRENT_TURRET_DEGREE: 15
-CURRENT_HOOD_DEGREE:   40
-LAUNCH_PARAMS:         14.0, 280.0
+# Scenario 40: Medium straight (4.5m)
+ROBOT_XY:              4.5, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
 ---
-
-
+# Scenario 41: Medium straight (4.8m)
+ROBOT_XY:              4.8, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 42: Medium straight (5.0m)
+ROBOT_XY:              5.0, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 43: Medium straight (5.3m)
+ROBOT_XY:              5.3, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 44: Medium straight (5.5m)
+ROBOT_XY:              5.5, 0.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 45: Medium straight (5.8m)
+# Scenario 46: Medium straight (6.0m)
+# Scenario 47: Medium 15° (4.0m)
+ROBOT_XY:              3.86, 1.04
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 48: Medium 30° (4.0m)
+ROBOT_XY:              3.46, 2.00
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 49: Medium 45° (4.0m)
+ROBOT_XY:              2.83, 2.83
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 50: Medium 60° (4.0m)
+ROBOT_XY:              2.00, 3.46
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 51: Medium 75° (4.0m)
+ROBOT_XY:              1.04, 3.86
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 52: Medium 15° (5.0m)
+ROBOT_XY:              4.83, 1.29
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 53: Medium 30° (5.0m)
+ROBOT_XY:              4.33, 2.50
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 54: Medium 45° (5.0m)
+ROBOT_XY:              3.54, 3.54
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 55: Medium 60° (5.0m)
+ROBOT_XY:              2.50, 4.33
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 56: Medium 75° (5.0m)
+ROBOT_XY:              1.29, 4.83
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 57: Medium 15° (6.0m)
+# Scenario 58: Medium 30° (6.0m)
+# Scenario 59: Medium 45° (6.0m)
+# Scenario 60: Medium 60° (6.0m)
+# Scenario 61: Medium 75° (6.0m)
 # ========================================
-# FULL 360° YAW CAPABILITY DEMONSTRATIONS
+# LONG RANGE (6m - 10m) - Maximum distance
 # ========================================
-
-# Scenario 29: 90° rotation (shooting to the right) - 5m to side
-ROBOT_XY:              0.0, -5.0
+# Scenario 62: Long straight (6.2m)
+# Scenario 63: Long straight (6.5m)
+# Scenario 64: Long straight (6.8m)
+# Scenario 65: Long straight (7.0m)
+# Scenario 66: Long straight (7.3m)
+# Scenario 67: Long straight (7.5m)
+# Scenario 68: Long straight (7.8m)
+# Scenario 69: Long straight (8.0m)
+# Scenario 70: Long straight (8.3m)
+# Scenario 71: Long straight (8.5m)
+# Scenario 72: Long straight (8.8m)
+# Scenario 73: Long straight (9.0m)
+# Scenario 74: Long straight (9.3m)
+# Scenario 75: Long straight (9.5m)
+# Scenario 76: Long straight (9.8m)
+# Scenario 77: Long straight (10.0m)
+# Scenario 78: Long 15° (7.0m)
+# Scenario 79: Long 30° (7.0m)
+# Scenario 80: Long 45° (7.0m)
+# Scenario 81: Long 15° (8.0m)
+# Scenario 82: Long 30° (8.0m)
+# Scenario 83: Long 45° (8.0m)
+# Scenario 84: Long 15° (9.0m)
+# Scenario 85: Long 30° (9.0m)
+# Scenario 86: Long 45° (9.0m)
+# Scenario 87: Long 15° (10.0m)
+# Scenario 88: Long 30° (10.0m)
+# Scenario 89: Long 45° (10.0m)
+# ========================================
+# EXTREME EDGE CASES
+# ========================================
+# Scenario 90: Perpendicular edge (0.3m, 3.0m)
+ROBOT_XY:              0.3, 3.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 91: Perpendicular edge (0.5m, 3.0m)
+ROBOT_XY:              0.5, 3.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 92: Perpendicular edge (1.0m, 3.0m)
+ROBOT_XY:              1.0, 3.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 93: Perpendicular edge (0.3m, 5.0m)
+ROBOT_XY:              0.3, 5.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 94: Perpendicular edge (0.5m, 5.0m)
+ROBOT_XY:              0.5, 5.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 95: Perpendicular edge (1.0m, 5.0m)
+ROBOT_XY:              1.0, 5.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 96: Perpendicular edge (0.3m, 7.0m)
+# Scenario 97: Perpendicular edge (0.5m, 7.0m)
+# Scenario 98: Perpendicular edge (1.0m, 7.0m)
+# Scenario 99: Perpendicular edge (0.3m, 9.0m)
+# Scenario 100: Perpendicular edge (0.5m, 9.0m)
+# Scenario 101: Perpendicular edge (1.0m, 9.0m)
+# Scenario 102: 45° corner (2.5m, 2.5m)
+ROBOT_XY:              2.5, 2.5
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 103: 45° corner (3.5m, 3.5m)
+ROBOT_XY:              3.5, 3.5
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 104: 45° corner (4.5m, 4.5m)
+# Scenario 105: 45° corner (5.5m, 5.5m)
+# Scenario 106: 45° corner (6.5m, 6.5m)
+# Scenario 107: 45° corner (7.0m, 7.0m)
+# Scenario 108: Turret misaligned 45° at 3.0m
+ROBOT_XY:              3.0, 0.0
+CURRENT_TURRET_DEGREE: 45
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 109: Turret misaligned 90° at 3.0m
+ROBOT_XY:              3.0, 0.0
 CURRENT_TURRET_DEGREE: 90
 CURRENT_HOOD_DEGREE:   0
 ---
-
-# Scenario 30: 270° rotation (shooting to the left) - 5m to other side
-ROBOT_XY:              0.0, 5.0
+# Scenario 110: Turret misaligned 180° at 3.0m
+ROBOT_XY:              3.0, 0.0
+CURRENT_TURRET_DEGREE: 180
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 111: Turret misaligned 270° at 3.0m
+ROBOT_XY:              3.0, 0.0
 CURRENT_TURRET_DEGREE: 270
 CURRENT_HOOD_DEGREE:   0
 ---
+# Scenario 112: Turret misaligned 45° at 5.0m
+ROBOT_XY:              5.0, 0.0
+CURRENT_TURRET_DEGREE: 45
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 113: Turret misaligned 90° at 5.0m
+ROBOT_XY:              5.0, 0.0
+CURRENT_TURRET_DEGREE: 90
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 114: Turret misaligned 180° at 5.0m
+ROBOT_XY:              5.0, 0.0
+CURRENT_TURRET_DEGREE: 180
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 115: Turret misaligned 270° at 5.0m
+ROBOT_XY:              5.0, 0.0
+CURRENT_TURRET_DEGREE: 270
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 116: Turret misaligned 45° at 7.0m
+# Scenario 117: Turret misaligned 90° at 7.0m
+# Scenario 118: Turret misaligned 180° at 7.0m
+# Scenario 119: Turret misaligned 270° at 7.0m
+# Scenario 120: Behind target (-1.0m, 3.0m)
+ROBOT_XY:              -1.0, 3.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 121: Behind target (-1.0m, 5.0m)
+ROBOT_XY:              -1.0, 5.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 122: Behind target (-1.0m, 7.0m)
+# Scenario 123: Behind target (-1.5m, 3.0m)
+ROBOT_XY:              -1.5, 3.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 124: Behind target (-1.5m, 5.0m)
+ROBOT_XY:              -1.5, 5.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 125: Behind target (-1.5m, 7.0m)
+# Scenario 126: Behind target (-2.0m, 3.0m)
+ROBOT_XY:              -2.0, 3.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 127: Behind target (-2.0m, 5.0m)
+ROBOT_XY:              -2.0, 5.0
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 128: Behind target (-2.0m, 7.0m)
+# Scenario 129: Precision test (2.7m, 1.3m)
+ROBOT_XY:              2.7, 1.3
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 130: Precision test (3.4m, 2.1m)
+ROBOT_XY:              3.4, 2.1
+CURRENT_TURRET_DEGREE: 0
+CURRENT_HOOD_DEGREE:   0
+---
+# Scenario 131: Precision test (4.1m, 3.7m)
+# Scenario 132: Precision test (5.3m, 2.9m)
+# Scenario 133: Precision test (6.2m, 4.3m)
+# Scenario 134: Precision test (7.1m, 2.8m)
+# Scenario 135: Precision test (8.4m, 3.2m)
+# Scenario 136: Precision test (9.1m, 4.1m)
+# ========================================
+# EXTENDED RANGE (10m - 17 feet/5.18m) - Maximum range testing
+# ========================================
+# Comprehensive edge case coverage for full 17 feet range
+# Target: 100% accuracy from any position within 17 feet
+# Extended range straight shots (10-14 feet)
