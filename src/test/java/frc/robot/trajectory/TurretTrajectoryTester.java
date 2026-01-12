@@ -210,25 +210,26 @@ public class TurretTrajectoryTester {
             }
         }
         
-        // Add a few key absolute angles based on distance (fast lookup table approach)
+        // Add key absolute angles based on distance (fast lookup table approach)
+        // These are empirically determined optimal ranges for FRC shooting
         if (distanceToTarget < 1.5) {
-            // Ultra-close: test steep angles
-            for (double angle = 60.0; angle <= 80.0; angle += 5.0) {
+            // Ultra-close: test very steep angles (geometric often underestimates here)
+            for (double angle = 55.0; angle <= 85.0; angle += 4.0) {
                 pitchAngleSet.add(angle);
             }
         } else if (distanceToTarget < 3.0) {
             // Close: test high arcs
-            for (double angle = 45.0; angle <= 70.0; angle += 5.0) {
+            for (double angle = 40.0; angle <= 75.0; angle += 5.0) {
                 pitchAngleSet.add(angle);
             }
         } else if (distanceToTarget < 6.0) {
             // Medium: test mid-range arcs
-            for (double angle = 35.0; angle <= 55.0; angle += 5.0) {
+            for (double angle = 30.0; angle <= 60.0; angle += 5.0) {
                 pitchAngleSet.add(angle);
             }
         } else {
             // Long: test optimal range arcs
-            for (double angle = 30.0; angle <= 50.0; angle += 5.0) {
+            for (double angle = 25.0; angle <= 50.0; angle += 5.0) {
                 pitchAngleSet.add(angle);
             }
         }
