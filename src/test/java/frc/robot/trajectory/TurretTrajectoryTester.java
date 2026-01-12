@@ -29,14 +29,15 @@ public class TurretTrajectoryTester {
     private final double maxBallSpeedMS;  // Maximum ball speed in meters per second
     private final double defaultSpinRate;
     
-    // Optimized search for 100% success rate with ultra-fast computation (<0.05s)
-    // Strategy: Smart comprehensive search - test practical angles efficiently
-    private static final double GEOMETRIC_SEARCH_RANGE_DEG = 20.0; // Wider search range for reliability
-    private static final double GEOMETRIC_SEARCH_STEP_DEG = 3.0;   // Finer step size for better coverage
-    private static final int FAST_SPEED_STEPS = 10;                 // More speed steps for 100% coverage
-    private static final double EARLY_EXIT_THRESHOLD = 0.88;        // Higher threshold for faster termination
-    private static final int MAX_CANDIDATES_TO_FIND = 8;            // Reduced for faster search
-    private static final double REFINEMENT_EXIT_THRESHOLD = 0.90;   // Only refine if best score below this
+    // Optimized search for 100% success rate with FAST computation (<500ms target)
+    // Strategy: Aggressive early exit with hard limits, balanced for close range
+    private static final double GEOMETRIC_SEARCH_RANGE_DEG = 16.0; // Narrower search
+    private static final double GEOMETRIC_SEARCH_STEP_DEG = 4.0;   // Coarser for speed
+    private static final int FAST_SPEED_STEPS = 7;                 // Minimal steps
+    private static final double EARLY_EXIT_THRESHOLD = 0.75;       // Very aggressive exit
+    private static final int MAX_CANDIDATES_TO_FIND = 2;           // Exit after 2 good candidates
+    private static final double REFINEMENT_EXIT_THRESHOLD = 0.80;  // Skip refinement early
+    private static final int MAX_ITERATIONS_BEFORE_EXIT = 400;     // Hard limit (increased for close range)
     
     /**
      * Configuration for a test scenario.
@@ -237,36 +238,26 @@ public class TurretTrajectoryTester {
         }
         
         // Add more practical angles based on distance for better coverage
-        // Optimized for 5.5m max range to ensure 100% success rate
-        if (distanceToTarget < 1.0) {
-            // EXTREME ultra-close (< 1.0m): ULTRA-comprehensive ULTRA-steep angle coverage
-            // Need 70-89° for distances 0.5-1.0m, with ultra-fine steps
-            for (double angle = 70.0; angle <= 89.0; angle += 0.75) {
+        // Optimized for 4.877m (16 feet) max range - balanced for 100% accuracy with speed
+        // Now >1.0m minimum, adjusted thresholds based on failure analysis
+        if (distanceToTarget < 1.6) {
+            // Critical close (1.0-1.6m): need finer coverage for 100% accuracy
+            for (double angle = 60.0; angle <= 87.0; angle += 1.5) {
                 pitchAngleSet.add(angle);
             }
-        } else if (distanceToTarget < 1.5) {
-            // Ultra-close (1.0-1.5m): comprehensive steep angle coverage
-            for (double angle = 65.0; angle <= 85.0; angle += 2.0) {
-                pitchAngleSet.add(angle);
-            }
-        } else if (distanceToTarget < 1.22) {
-            // Close (1.5-4 feet): comprehensive high arc coverage
-            for (double angle = 45.0; angle <= 80.0; angle += 3.0) {
-                pitchAngleSet.add(angle);
-            }
-        } else if (distanceToTarget < 2.13) {
-            // Medium (4-7 feet): comprehensive mid-range coverage
-            for (double angle = 30.0; angle <= 70.0; angle += 3.0) {
+        } else if (distanceToTarget < 2.5) {
+            // Medium (1.6-8 feet): mid-range coverage
+            for (double angle = 30.0; angle <= 70.0; angle += 3.5) {
                 pitchAngleSet.add(angle);
             }
         } else if (distanceToTarget < 3.66) {
-            // Long (7-12 feet): comprehensive optimal trajectory coverage
-            for (double angle = 20.0; angle <= 65.0; angle += 3.0) {
+            // Long (8-12 feet): optimal trajectory coverage
+            for (double angle = 20.0; angle <= 65.0; angle += 4.5) {
                 pitchAngleSet.add(angle);
             }
         } else {
-            // Very long (12-17 feet): comprehensive extended range coverage
-            for (double angle = 15.0; angle <= 60.0; angle += 3.0) {
+            // Very long (12-16 feet): extended range coverage
+            for (double angle = 15.0; angle <= 60.0; angle += 5.0) {
                 pitchAngleSet.add(angle);
             }
         }
@@ -275,27 +266,32 @@ public class TurretTrajectoryTester {
         Double[] pitchAngles = pitchAngleSet.toArray(new Double[0]);
         java.util.Arrays.sort(pitchAngles);
         
-        // Speed configuration - MORE steps for ultra-close shots
+        // Speed configuration - balanced for 100% accuracy and speed
         int speedSteps;
-        if (distanceToTarget < 1.0) {
-            // Ultra-close: need MANY more speed steps to find the ultra-precise sweet spot
-            speedSteps = 25;  // Increased from 20
-        } else if (distanceToTarget < 1.5) {
-            // Very close: more steps
-            speedSteps = 15;
+        if (distanceToTarget < 1.6) {
+            // Critical close range: need more steps for 100% accuracy
+            speedSteps = 14;
+        } else if (distanceToTarget < 2.5) {
+            // Medium close: moderate steps
+            speedSteps = 9;
         } else {
-            // Normal: standard steps
+            // Normal: minimal steps
             speedSteps = FAST_SPEED_STEPS;
         }
         double speedStep = (maxSpeed - minSpeed) / speedSteps;
         
-        // Yaw offsets - OPTIMIZED for speed: fewer angles while maintaining coverage
-        // Reduced from 13 to 9 for faster computation
-        double[] yawOffsets = {0.0, -2.0, 2.0, -4.0, 4.0, -7.0, 7.0, -10.0, 10.0};
+        // Yaw offsets - balanced: more for close, fewer for far
+        double[] yawOffsets;
+        if (distanceToTarget < 1.8) {
+            yawOffsets = new double[]{0.0, -2.0, 2.0, -5.0, 5.0, -8.0, 8.0};
+        } else {
+            yawOffsets = new double[]{0.0, -3.0, 3.0, -6.0, 6.0};
+        }
         
-        // Comprehensive candidate search - ensure 100% success rate
-        // Target: <0.1 second total while finding ALL viable shots
+        // Comprehensive candidate search with hard iteration limit
+        // Target: <500ms per scenario
         int candidatesFound = 0;
+        int iterationCount = 0;
         for (int s = 0; s <= speedSteps; s++) {
             double testSpeed = minSpeed + s * speedStep;
             if (testSpeed > maxSpeed) continue;
@@ -307,6 +303,12 @@ public class TurretTrajectoryTester {
                 
                 for (double yawOffset : yawOffsets) {
                     double testYaw = targetYaw + yawOffset;
+                    
+                    // Hard limit check - prevent runaway scenarios
+                    iterationCount++;
+                    if (iterationCount > MAX_ITERATIONS_BEFORE_EXIT && bestResult != null && bestResult.hitTarget) {
+                        break; // Exit if we have a solution and hit iteration limit
+                    }
                     
                     // Simulate this trajectory
                     TrajectorySimulator.TrajectoryResult result = trajSimulator.simulateWithShooterModel(
@@ -369,10 +371,20 @@ public class TurretTrajectoryTester {
                     }
                 }
                 
+                // Hard limit check for pitch loop
+                if (iterationCount > MAX_ITERATIONS_BEFORE_EXIT && bestResult != null && bestResult.hitTarget) {
+                    break;
+                }
+                
                 // Early exit only if found excellent candidates
                 if (bestScore > EARLY_EXIT_THRESHOLD && candidatesFound >= MAX_CANDIDATES_TO_FIND) {
                     break;  // Exit pitch loop
                 }
+            }
+            
+            // Hard limit check for speed loop
+            if (iterationCount > MAX_ITERATIONS_BEFORE_EXIT && bestResult != null && bestResult.hitTarget) {
+                break;
             }
             
             // Early exit only if found excellent candidates
@@ -381,13 +393,13 @@ public class TurretTrajectoryTester {
             }
         }
         
-        // Phase 2: Refinement for near-perfect accuracy
-        // More thorough refinement to ensure we find the absolute best
-        if (bestResult != null && bestResult.hitTarget && bestScore < REFINEMENT_EXIT_THRESHOLD) {
-            // More comprehensive refinement with finer steps
-            double fineSpeedStep = Math.max(0.3, (maxSpeed - minSpeed) / 15.0);
-            double[] finePitchOffsets = {0, -1.5, 1.5, -3.0, 3.0};  // ±3° refinement with finer steps
-            double[] fineYawOffsets = {0, -1.5, 1.5, -3.0, 3.0};    // ±3° refinement with finer steps
+        // Phase 2: Refinement - simplified for speed
+        // Only refine if we have a marginal solution
+        if (bestResult != null && bestResult.hitTarget && bestScore < REFINEMENT_EXIT_THRESHOLD && bestScore > 0.65) {
+            // Minimal refinement with coarse steps for speed
+            double fineSpeedStep = Math.max(0.5, (maxSpeed - minSpeed) / 10.0);
+            double[] finePitchOffsets = {0, -2.0, 2.0};  // ±2° only
+            double[] fineYawOffsets = {0, -2.0, 2.0};    // ±2° only
             
             for (double speedOffset = -fineSpeedStep; speedOffset <= fineSpeedStep; speedOffset += fineSpeedStep) {
                 double testSpeed = bestSpeed + speedOffset;
@@ -754,6 +766,9 @@ public class TurretTrajectoryTester {
         
         int successful = 0;
         double totalSuccessProb = 0.0;
+        double totalComputeTime = 0.0;
+        double minComputeTime = Double.MAX_VALUE;
+        double maxComputeTime = 0.0;
         
         for (int i = 0; i < configs.size(); i++) {
             TestConfig config = configs.get(i);
@@ -774,9 +789,19 @@ public class TurretTrajectoryTester {
             double dy = config.targetPosition.y - config.robotPosition.y;
             double distance = Math.sqrt(dx * dx + dy * dy);
             System.out.println("  Distance to target: " + 
-                String.format("%.2f", distance) + " m\n");
+                String.format("%.2f", distance) + " m");
             
+            // Time the computation
+            long startTime = System.nanoTime();
             SolutionOutput solution = computeOptimalShot(config);
+            long endTime = System.nanoTime();
+            double computeTimeMs = (endTime - startTime) / 1_000_000.0;
+            
+            totalComputeTime += computeTimeMs;
+            minComputeTime = Math.min(minComputeTime, computeTimeMs);
+            maxComputeTime = Math.max(maxComputeTime, computeTimeMs);
+            
+            System.out.println("  Computation time: " + String.format("%.2f", computeTimeMs) + " ms\n");
             System.out.println(solution);
             
             if (solution.hasShot) {
@@ -788,14 +813,23 @@ public class TurretTrajectoryTester {
         }
         
         double avgSuccessProb = successful > 0 ? totalSuccessProb / successful : 0.0;
+        double avgComputeTime = configs.size() > 0 ? totalComputeTime / configs.size() : 0.0;
         
         System.out.println("=======================================================");
         System.out.println("SUMMARY:");
         System.out.println("  Total scenarios:       " + configs.size());
         System.out.println("  Viable shots found:    " + successful);
         System.out.println("  No solution:           " + (configs.size() - successful));
+        System.out.println("  Success rate:          " + 
+            String.format("%.1f%%", (100.0 * successful / configs.size())));
         System.out.println("  Avg success prob:      " + 
             String.format("%.1f%%", avgSuccessProb * 100));
+        System.out.println();
+        System.out.println("PERFORMANCE:");
+        System.out.println("  Total compute time:    " + String.format("%.2f", totalComputeTime) + " ms");
+        System.out.println("  Average per scenario:  " + String.format("%.2f", avgComputeTime) + " ms");
+        System.out.println("  Min compute time:      " + String.format("%.2f", minComputeTime) + " ms");
+        System.out.println("  Max compute time:      " + String.format("%.2f", maxComputeTime) + " ms");
         System.out.println("=======================================================");
     }
     
