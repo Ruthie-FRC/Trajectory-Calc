@@ -1,7 +1,7 @@
 # ========================================
-# TRAJECTORY TEST TARGETS - COMPREHENSIVE 17 FEET (5.18M) COVERAGE
+# TRAJECTORY TEST TARGETS - 16 FEET (4.88M) MAX RANGE
 # ========================================
-# This file contains comprehensive test scenarios covering all edge cases within 17 feet range.
+# This file contains comprehensive test scenarios within valid operational range.
 # Focus: 100% Accuracy from any position, Precision, Rim Clearance, Center-targeting
 #
 # FORMAT (each section on separate lines for readability):
@@ -14,32 +14,19 @@
 # TARGET INFORMATION:
 #   - Target is ALWAYS at field origin (0, 0) with height 1.83m (HUB center)
 #   - HUB opening: 41.7in (~1.06m) hexagonal
-#   - Shooter height: constant at 0.5m (~half foot from ground)
+#   - Shooter height: constant at 0.5m above ground
 #   - MUST CLEAR RIM vertically and aim for CENTER of target
+#
+# VALID RANGE CONSTRAINTS:
+#   - Minimum distance: > 1.0m (shots closer than 1m are banned)
+#   - Maximum distance: ≤ 16 feet (4.877m)
+#   - Speed constraint: 30 ft/s (9.144 m/s) max exit velocity
 #
 # Lines starting with # are comments and will be ignored.
 # ========================================
 # ========================================
-# ULTRA-CLOSE RANGE (0.5m - 1.5m) - Extreme steep angles required
+# CLOSE RANGE (1.0m - 2.0m) - Steep angles required
 # ========================================
-# Scenario 1: Ultra-close straight (0.5m)
-# Scenario 2: Ultra-close straight (0.6m)
-# Scenario 3: Ultra-close straight (0.7m)
-# Scenario 4: Ultra-close straight (0.8m)
-ROBOT_XY:              0.8, 0.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
-# Scenario 5: Ultra-close straight (0.9m)
-ROBOT_XY:              0.9, 0.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
-# Scenario 6: Ultra-close straight (1.0m)
-ROBOT_XY:              1.0, 0.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 7: Ultra-close straight (1.1m)
 ROBOT_XY:              1.1, 0.0
 CURRENT_TURRET_DEGREE: 0
@@ -430,10 +417,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Random test 6: 0.92m at 71.6°
-ROBOT_XY:              0.29, 0.88
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Random test 7: 3.85m at 196.2°
 ROBOT_XY:              -3.70, -1.07
 CURRENT_TURRET_DEGREE: 0
@@ -597,10 +580,6 @@ CURRENT_HOOD_DEGREE:   0
 # Random test 43: 5.48m at 190.5°
 # Random test 44: 5.36m at 309.9°
 # Random test 45: 0.85m at 259.5°
-ROBOT_XY:              -0.16, -0.84
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Random test 46: 2.05m at 230.7°
 ROBOT_XY:              -1.30, -1.59
 CURRENT_TURRET_DEGREE: 0
@@ -662,10 +641,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Diverse test 9: 0.90m at 328.0°
-ROBOT_XY:              0.76, -0.48
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Diverse test 10: 4.74m at 276.8°
 ROBOT_XY:              0.56, -4.70
 CURRENT_TURRET_DEGREE: 0
@@ -780,10 +755,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Diverse test 35: 0.84m at 192.9°
-ROBOT_XY:              -0.82, -0.19
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Diverse test 36: 1.15m at 249.9°
 ROBOT_XY:              -0.39, -1.08
 CURRENT_TURRET_DEGREE: 0
@@ -969,30 +940,14 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Grid: 1.0m at 100°
-ROBOT_XY:              -0.17, 0.98
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 1.0m at 120°
 ROBOT_XY:              -0.50, 0.87
 CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Grid: 1.0m at 160°
-ROBOT_XY:              -0.94, 0.34
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 1.0m at 180°
-ROBOT_XY:              -1.00, 0.00
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 1.0m at 200°
-ROBOT_XY:              -0.94, -0.34
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 1.0m at 220°
 ROBOT_XY:              -0.77, -0.64
 CURRENT_TURRET_DEGREE: 0
@@ -1004,10 +959,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Grid: 1.0m at 280°
-ROBOT_XY:              0.17, -0.98
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 1.0m at 300°
 ROBOT_XY:              0.50, -0.87
 CURRENT_TURRET_DEGREE: 0
@@ -1019,10 +970,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Grid: 1.0m at 340°
-ROBOT_XY:              0.94, -0.34
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 1.5m at 20°
 ROBOT_XY:              1.41, 0.51
 CURRENT_TURRET_DEGREE: 0
