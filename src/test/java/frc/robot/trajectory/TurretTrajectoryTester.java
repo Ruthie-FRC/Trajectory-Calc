@@ -29,14 +29,15 @@ public class TurretTrajectoryTester {
     private final double maxBallSpeedMS;  // Maximum ball speed in meters per second
     private final double defaultSpinRate;
     
-    // Optimized search for 100% success rate with FAST computation
-    // Strategy: Smart search with aggressive early exit
-    private static final double GEOMETRIC_SEARCH_RANGE_DEG = 18.0; // Balanced search range
-    private static final double GEOMETRIC_SEARCH_STEP_DEG = 3.5;   // Slightly coarser for speed
-    private static final int FAST_SPEED_STEPS = 8;                 // Reduced for speed
-    private static final double EARLY_EXIT_THRESHOLD = 0.80;       // Lower for faster exit
-    private static final int MAX_CANDIDATES_TO_FIND = 3;           // Find good solution quickly
-    private static final double REFINEMENT_EXIT_THRESHOLD = 0.83;  // Skip refinement sooner
+    // Optimized search for 100% success rate with FAST computation (<500ms target)
+    // Strategy: Aggressive early exit with hard limits, balanced for close range
+    private static final double GEOMETRIC_SEARCH_RANGE_DEG = 16.0; // Narrower search
+    private static final double GEOMETRIC_SEARCH_STEP_DEG = 4.0;   // Coarser for speed
+    private static final int FAST_SPEED_STEPS = 7;                 // Minimal steps
+    private static final double EARLY_EXIT_THRESHOLD = 0.75;       // Very aggressive exit
+    private static final int MAX_CANDIDATES_TO_FIND = 2;           // Exit after 2 good candidates
+    private static final double REFINEMENT_EXIT_THRESHOLD = 0.80;  // Skip refinement early
+    private static final int MAX_ITERATIONS_BEFORE_EXIT = 400;     // Hard limit (increased for close range)
     
     /**
      * Configuration for a test scenario.
@@ -237,26 +238,26 @@ public class TurretTrajectoryTester {
         }
         
         // Add more practical angles based on distance for better coverage
-        // Optimized for 4.877m (16 feet) max range to ensure 100% success rate
-        // Now >1.0m minimum, so we can use coarser steps
-        if (distanceToTarget < 1.7) {
-            // Close (1.0-1.7m): steep angle coverage with balanced granularity
+        // Optimized for 4.877m (16 feet) max range - balanced for 100% accuracy with speed
+        // Now >1.0m minimum, adjusted thresholds based on failure analysis
+        if (distanceToTarget < 1.6) {
+            // Critical close (1.0-1.6m): need finer coverage for 100% accuracy
             for (double angle = 60.0; angle <= 87.0; angle += 1.5) {
                 pitchAngleSet.add(angle);
             }
-        } else if (distanceToTarget < 2.13) {
-            // Medium (1.7-7 feet): mid-range coverage
-            for (double angle = 30.0; angle <= 70.0; angle += 3.0) {
+        } else if (distanceToTarget < 2.5) {
+            // Medium (1.6-8 feet): mid-range coverage
+            for (double angle = 30.0; angle <= 70.0; angle += 3.5) {
                 pitchAngleSet.add(angle);
             }
         } else if (distanceToTarget < 3.66) {
-            // Long (7-12 feet): optimal trajectory coverage
-            for (double angle = 20.0; angle <= 65.0; angle += 3.5) {
+            // Long (8-12 feet): optimal trajectory coverage
+            for (double angle = 20.0; angle <= 65.0; angle += 4.5) {
                 pitchAngleSet.add(angle);
             }
         } else {
             // Very long (12-16 feet): extended range coverage
-            for (double angle = 15.0; angle <= 60.0; angle += 4.0) {
+            for (double angle = 15.0; angle <= 60.0; angle += 5.0) {
                 pitchAngleSet.add(angle);
             }
         }
@@ -265,23 +266,32 @@ public class TurretTrajectoryTester {
         Double[] pitchAngles = pitchAngleSet.toArray(new Double[0]);
         java.util.Arrays.sort(pitchAngles);
         
-        // Speed configuration - optimized for speed while maintaining accuracy
+        // Speed configuration - balanced for 100% accuracy and speed
         int speedSteps;
-        if (distanceToTarget < 1.7) {
-            // Close range: moderate steps
-            speedSteps = 12;
+        if (distanceToTarget < 1.6) {
+            // Critical close range: need more steps for 100% accuracy
+            speedSteps = 14;
+        } else if (distanceToTarget < 2.5) {
+            // Medium close: moderate steps
+            speedSteps = 9;
         } else {
-            // Normal: standard steps
+            // Normal: minimal steps
             speedSteps = FAST_SPEED_STEPS;
         }
         double speedStep = (maxSpeed - minSpeed) / speedSteps;
         
-        // Yaw offsets - reduced for faster computation
-        double[] yawOffsets = {0.0, -2.0, 2.0, -5.0, 5.0, -8.0, 8.0};
+        // Yaw offsets - balanced: more for close, fewer for far
+        double[] yawOffsets;
+        if (distanceToTarget < 1.8) {
+            yawOffsets = new double[]{0.0, -2.0, 2.0, -5.0, 5.0, -8.0, 8.0};
+        } else {
+            yawOffsets = new double[]{0.0, -3.0, 3.0, -6.0, 6.0};
+        }
         
-        // Comprehensive candidate search - ensure 100% success rate
-        // Target: <0.1 second total while finding ALL viable shots
+        // Comprehensive candidate search with hard iteration limit
+        // Target: <500ms per scenario
         int candidatesFound = 0;
+        int iterationCount = 0;
         for (int s = 0; s <= speedSteps; s++) {
             double testSpeed = minSpeed + s * speedStep;
             if (testSpeed > maxSpeed) continue;
@@ -293,6 +303,12 @@ public class TurretTrajectoryTester {
                 
                 for (double yawOffset : yawOffsets) {
                     double testYaw = targetYaw + yawOffset;
+                    
+                    // Hard limit check - prevent runaway scenarios
+                    iterationCount++;
+                    if (iterationCount > MAX_ITERATIONS_BEFORE_EXIT && bestResult != null && bestResult.hitTarget) {
+                        break; // Exit if we have a solution and hit iteration limit
+                    }
                     
                     // Simulate this trajectory
                     TrajectorySimulator.TrajectoryResult result = trajSimulator.simulateWithShooterModel(
@@ -355,10 +371,20 @@ public class TurretTrajectoryTester {
                     }
                 }
                 
+                // Hard limit check for pitch loop
+                if (iterationCount > MAX_ITERATIONS_BEFORE_EXIT && bestResult != null && bestResult.hitTarget) {
+                    break;
+                }
+                
                 // Early exit only if found excellent candidates
                 if (bestScore > EARLY_EXIT_THRESHOLD && candidatesFound >= MAX_CANDIDATES_TO_FIND) {
                     break;  // Exit pitch loop
                 }
+            }
+            
+            // Hard limit check for speed loop
+            if (iterationCount > MAX_ITERATIONS_BEFORE_EXIT && bestResult != null && bestResult.hitTarget) {
+                break;
             }
             
             // Early exit only if found excellent candidates
