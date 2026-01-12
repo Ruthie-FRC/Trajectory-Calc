@@ -128,7 +128,7 @@ public class TurretTrajectoryTester {
     }
     
     public TurretTrajectoryTester() {
-        this(Double.MAX_VALUE, 200.0);  // No RPM limit - unlimited speed
+        this(5000.0, 200.0);  // Default 5000 RPM
     }
     
     public TurretTrajectoryTester(double maxFlywheelRPM, double defaultSpinRate) {
@@ -159,15 +159,9 @@ public class TurretTrajectoryTester {
         
         Vector3D spin = new Vector3D(0, config.spinRate, 0); // Backspin
         
-        // Calculate max launch speed from max RPM (or use reasonable cap if unlimited)
+        // Calculate max launch speed from max RPM
         double wheelCircumference = Math.PI * wheelDiameterMeters;
-        double maxSpeed;
-        if (maxFlywheelRPM == Double.MAX_VALUE) {
-            // No RPM limit - use physics-reasonable maximum (e.g., 50 m/s ~ 112 mph)
-            maxSpeed = 50.0;
-        } else {
-            maxSpeed = (maxFlywheelRPM * wheelCircumference) / 60.0;
-        }
+        double maxSpeed = (maxFlywheelRPM * wheelCircumference) / 60.0;
         
         // Calculate required yaw to point at target
         double targetYaw = Math.toDegrees(Math.atan2(dy, dx));
@@ -276,7 +270,34 @@ public class TurretTrajectoryTester {
                         config.robotPosition, testSpeed, testYaw, testPitch, spin);
                     
                     if (result.hitTarget) {
-                        double score = result.entryScore;
+                        // Improved scoring: consider multiple physics factors
+                        // 1. Entry score (how well ball enters target)
+                        double entryComponent = result.entryScore * 0.4;
+                        
+                        // 2. Trajectory efficiency (prefer optimal arc, not max speed)
+                        // Lower speeds are better if they still hit (more consistent)
+                        double speedEfficiency = 1.0 - ((testSpeed - minSpeed) / (maxSpeed - minSpeed)) * 0.3;
+                        double efficiencyComponent = speedEfficiency * 0.2;
+                        
+                        // 3. Flight time (prefer reasonable times - not too fast, not too slow)
+                        // Optimal around 1-2 seconds for good control
+                        double flightTime = result.trajectory.get(result.trajectory.size() - 1).time;
+                        double optimalTime = 1.5;
+                        double timeDiff = Math.abs(flightTime - optimalTime);
+                        double timeScore = Math.max(0, 1.0 - timeDiff / 2.0);
+                        double timeComponent = timeScore * 0.2;
+                        
+                        // 4. Apex height (prefer reasonable arc - not too flat, not too high)
+                        // Optimal apex around 2-4m above target for good entry
+                        double targetHeight = config.targetPosition.z;
+                        double apexAboveTarget = result.getMaxHeight() - targetHeight;
+                        double optimalApex = 2.5;
+                        double apexDiff = Math.abs(apexAboveTarget - optimalApex);
+                        double apexScore = Math.max(0, 1.0 - apexDiff / 3.0);
+                        double apexComponent = apexScore * 0.2;
+                        
+                        // Combined physics-based score
+                        double score = entryComponent + efficiencyComponent + timeComponent + apexComponent;
                         
                         if (score > bestScore) {
                             bestScore = score;
@@ -285,8 +306,8 @@ public class TurretTrajectoryTester {
                             bestYaw = testYaw;
                             bestPitch = testPitch;
                             
-                            // If we found a great shot, we can stop searching
-                            if (score > 0.6) {
+                            // If we found an excellent shot (80%+), we can stop searching
+                            if (score > 0.8) {
                                 break;
                             }
                         }
@@ -294,11 +315,11 @@ public class TurretTrajectoryTester {
                 }
                 
                 // Early exit if we found an excellent shot
-                if (bestScore > 0.7) break;
+                if (bestScore > 0.85) break;
             }
             
             // Early exit if we found an excellent shot
-            if (bestScore > 0.7) break;
+            if (bestScore > 0.85) break;
         }
         
         // Phase 2: Fine search around best solution if we found one but it's not great
