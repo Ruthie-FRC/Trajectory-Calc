@@ -754,9 +754,6 @@ public class TurretTrajectoryTester {
         
         int successful = 0;
         double totalSuccessProb = 0.0;
-        double totalComputeTime = 0.0;
-        double minComputeTime = Double.MAX_VALUE;
-        double maxComputeTime = 0.0;
         
         for (int i = 0; i < configs.size(); i++) {
             TestConfig config = configs.get(i);
@@ -777,19 +774,9 @@ public class TurretTrajectoryTester {
             double dy = config.targetPosition.y - config.robotPosition.y;
             double distance = Math.sqrt(dx * dx + dy * dy);
             System.out.println("  Distance to target: " + 
-                String.format("%.2f", distance) + " m");
+                String.format("%.2f", distance) + " m\n");
             
-            // Time the computation
-            long startTime = System.nanoTime();
             SolutionOutput solution = computeOptimalShot(config);
-            long endTime = System.nanoTime();
-            double computeTimeMs = (endTime - startTime) / 1_000_000.0;
-            
-            totalComputeTime += computeTimeMs;
-            minComputeTime = Math.min(minComputeTime, computeTimeMs);
-            maxComputeTime = Math.max(maxComputeTime, computeTimeMs);
-            
-            System.out.println("  Computation time: " + String.format("%.2f", computeTimeMs) + " ms\n");
             System.out.println(solution);
             
             if (solution.hasShot) {
@@ -801,23 +788,14 @@ public class TurretTrajectoryTester {
         }
         
         double avgSuccessProb = successful > 0 ? totalSuccessProb / successful : 0.0;
-        double avgComputeTime = configs.size() > 0 ? totalComputeTime / configs.size() : 0.0;
         
         System.out.println("=======================================================");
         System.out.println("SUMMARY:");
         System.out.println("  Total scenarios:       " + configs.size());
         System.out.println("  Viable shots found:    " + successful);
         System.out.println("  No solution:           " + (configs.size() - successful));
-        System.out.println("  Success rate:          " + 
-            String.format("%.1f%%", (100.0 * successful / configs.size())));
         System.out.println("  Avg success prob:      " + 
             String.format("%.1f%%", avgSuccessProb * 100));
-        System.out.println();
-        System.out.println("PERFORMANCE:");
-        System.out.println("  Total compute time:    " + String.format("%.2f", totalComputeTime) + " ms");
-        System.out.println("  Average per scenario:  " + String.format("%.2f", avgComputeTime) + " ms");
-        System.out.println("  Min compute time:      " + String.format("%.2f", minComputeTime) + " ms");
-        System.out.println("  Max compute time:      " + String.format("%.2f", maxComputeTime) + " ms");
         System.out.println("=======================================================");
     }
     

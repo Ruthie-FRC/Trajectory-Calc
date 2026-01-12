@@ -222,20 +222,8 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Scenario 42: Medium straight (5.0m)
-ROBOT_XY:              5.0, 0.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 43: Medium straight (5.3m)
-ROBOT_XY:              5.3, 0.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 44: Medium straight (5.5m)
-ROBOT_XY:              5.5, 0.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 45: Medium straight (5.8m)
 # Scenario 46: Medium straight (6.0m)
 # Scenario 47: Medium 15° (4.0m)
@@ -264,30 +252,10 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Scenario 52: Medium 15° (5.0m)
-ROBOT_XY:              4.83, 1.29
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 53: Medium 30° (5.0m)
-ROBOT_XY:              4.33, 2.50
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 54: Medium 45° (5.0m)
-ROBOT_XY:              3.54, 3.54
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 55: Medium 60° (5.0m)
-ROBOT_XY:              2.50, 4.33
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 56: Medium 75° (5.0m)
-ROBOT_XY:              1.29, 4.83
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 57: Medium 15° (6.0m)
 # Scenario 58: Medium 30° (6.0m)
 # Scenario 59: Medium 45° (6.0m)
@@ -343,20 +311,8 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Scenario 93: Perpendicular edge (0.3m, 5.0m)
-ROBOT_XY:              0.3, 5.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 94: Perpendicular edge (0.5m, 5.0m)
-ROBOT_XY:              0.5, 5.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 95: Perpendicular edge (1.0m, 5.0m)
-ROBOT_XY:              1.0, 5.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 96: Perpendicular edge (0.3m, 7.0m)
 # Scenario 97: Perpendicular edge (0.5m, 7.0m)
 # Scenario 98: Perpendicular edge (1.0m, 7.0m)
@@ -369,10 +325,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Scenario 103: 45° corner (3.5m, 3.5m)
-ROBOT_XY:              3.5, 3.5
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 104: 45° corner (4.5m, 4.5m)
 # Scenario 105: 45° corner (5.5m, 5.5m)
 # Scenario 106: 45° corner (6.5m, 6.5m)
@@ -398,25 +350,9 @@ CURRENT_TURRET_DEGREE: 270
 CURRENT_HOOD_DEGREE:   0
 ---
 # Scenario 112: Turret misaligned 45° at 5.0m
-ROBOT_XY:              5.0, 0.0
-CURRENT_TURRET_DEGREE: 45
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 113: Turret misaligned 90° at 5.0m
-ROBOT_XY:              5.0, 0.0
-CURRENT_TURRET_DEGREE: 90
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 114: Turret misaligned 180° at 5.0m
-ROBOT_XY:              5.0, 0.0
-CURRENT_TURRET_DEGREE: 180
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 115: Turret misaligned 270° at 5.0m
-ROBOT_XY:              5.0, 0.0
-CURRENT_TURRET_DEGREE: 270
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 116: Turret misaligned 45° at 7.0m
 # Scenario 117: Turret misaligned 90° at 7.0m
 # Scenario 118: Turret misaligned 180° at 7.0m
@@ -427,10 +363,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Scenario 121: Behind target (-1.0m, 5.0m)
-ROBOT_XY:              -1.0, 5.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 122: Behind target (-1.0m, 7.0m)
 # Scenario 123: Behind target (-1.5m, 3.0m)
 ROBOT_XY:              -1.5, 3.0
@@ -438,10 +370,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Scenario 124: Behind target (-1.5m, 5.0m)
-ROBOT_XY:              -1.5, 5.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 125: Behind target (-1.5m, 7.0m)
 # Scenario 126: Behind target (-2.0m, 3.0m)
 ROBOT_XY:              -2.0, 3.0
@@ -449,10 +377,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Scenario 127: Behind target (-2.0m, 5.0m)
-ROBOT_XY:              -2.0, 5.0
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Scenario 128: Behind target (-2.0m, 7.0m)
 # Scenario 129: Precision test (2.7m, 1.3m)
 ROBOT_XY:              2.7, 1.3
@@ -526,10 +450,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Random test 10: 5.30m at 121.2°
-ROBOT_XY:              -2.74, 4.53
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Random test 11: 1.24m at 34.8°
 ROBOT_XY:              1.01, 0.71
 CURRENT_TURRET_DEGREE: 0
@@ -611,10 +531,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Random test 27: 5.45m at 230.4°
-ROBOT_XY:              -3.47, -4.20
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Random test 28: 3.42m at 246.5°
 ROBOT_XY:              -1.36, -3.13
 CURRENT_TURRET_DEGREE: 0
@@ -636,20 +552,12 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Random test 32: 4.92m at 113.3°
-ROBOT_XY:              -1.94, 4.52
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Random test 33: 3.88m at 142.4°
 ROBOT_XY:              -3.08, 2.37
 CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Random test 34: 5.10m at 165.2°
-ROBOT_XY:              -4.93, 1.30
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Random test 35: 2.04m at 88.8°
 ROBOT_XY:              0.04, 2.04
 CURRENT_TURRET_DEGREE: 0
@@ -666,10 +574,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Random test 38: 5.49m at 183.4°
-ROBOT_XY:              -5.48, -0.33
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Random test 39: 1.23m at 17.0°
 ROBOT_XY:              1.17, 0.36
 CURRENT_TURRET_DEGREE: 0
@@ -691,15 +595,7 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Random test 43: 5.48m at 190.5°
-ROBOT_XY:              -5.39, -1.00
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Random test 44: 5.36m at 309.9°
-ROBOT_XY:              3.44, -4.12
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Random test 45: 0.85m at 259.5°
 ROBOT_XY:              -0.16, -0.84
 CURRENT_TURRET_DEGREE: 0
@@ -721,10 +617,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Random test 49: 4.92m at 94.8°
-ROBOT_XY:              -0.41, 4.90
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Random test 50: 3.15m at 64.3°
 ROBOT_XY:              1.37, 2.84
 CURRENT_TURRET_DEGREE: 0
@@ -764,10 +656,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Diverse test 7: 5.06m at 33.4°
-ROBOT_XY:              4.22, 2.78
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Diverse test 8: 1.47m at 284.4°
 ROBOT_XY:              0.37, -1.42
 CURRENT_TURRET_DEGREE: 0
@@ -864,25 +752,13 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Diverse test 27: 5.07m at 230.0°
-ROBOT_XY:              -3.26, -3.88
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Diverse test 28: 5.46m at 347.1°
-ROBOT_XY:              5.32, -1.22
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Diverse test 29: 3.76m at 84.0°
 ROBOT_XY:              0.39, 3.74
 CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Diverse test 30: 5.46m at 160.0°
-ROBOT_XY:              -5.13, 1.87
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Diverse test 31: 4.33m at 15.9°
 ROBOT_XY:              4.17, 1.19
 CURRENT_TURRET_DEGREE: 0
@@ -934,10 +810,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Diverse test 41: 5.36m at 318.2°
-ROBOT_XY:              3.99, -3.57
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Diverse test 42: 2.77m at 258.4°
 ROBOT_XY:              -0.56, -2.71
 CURRENT_TURRET_DEGREE: 0
@@ -949,10 +821,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Diverse test 44: 4.93m at 20.6°
-ROBOT_XY:              4.62, 1.73
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Diverse test 45: 3.24m at 193.5°
 ROBOT_XY:              -3.15, -0.76
 CURRENT_TURRET_DEGREE: 0
@@ -964,15 +832,7 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Diverse test 47: 5.10m at 279.4°
-ROBOT_XY:              0.83, -5.04
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Diverse test 48: 5.38m at 186.2°
-ROBOT_XY:              -5.35, -0.58
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Diverse test 49: 3.76m at 288.8°
 ROBOT_XY:              1.21, -3.56
 CURRENT_TURRET_DEGREE: 0
@@ -1019,20 +879,12 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Diverse test 58: 5.21m at 28.9°
-ROBOT_XY:              4.56, 2.52
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Diverse test 59: 1.73m at 71.8°
 ROBOT_XY:              0.54, 1.64
 CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Diverse test 60: 5.48m at 320.7°
-ROBOT_XY:              4.24, -3.47
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Diverse test 61: 1.71m at 203.3°
 ROBOT_XY:              -1.57, -0.68
 CURRENT_TURRET_DEGREE: 0
@@ -1049,10 +901,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Diverse test 64: 5.17m at 291.2°
-ROBOT_XY:              1.87, -4.82
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Diverse test 65: 3.31m at 283.0°
 ROBOT_XY:              0.74, -3.23
 CURRENT_TURRET_DEGREE: 0
@@ -1074,10 +922,6 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Diverse test 69: 5.02m at 284.6°
-ROBOT_XY:              1.26, -4.86
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Diverse test 70: 3.66m at 178.0°
 ROBOT_XY:              -3.66, 0.13
 CURRENT_TURRET_DEGREE: 0
@@ -1660,62 +1504,14 @@ CURRENT_TURRET_DEGREE: 0
 CURRENT_HOOD_DEGREE:   0
 ---
 # Grid: 5.0m at 40°
-ROBOT_XY:              3.83, 3.21
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 5.0m at 120°
-ROBOT_XY:              -2.50, 4.33
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 5.0m at 140°
-ROBOT_XY:              -3.83, 3.21
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 5.0m at 160°
-ROBOT_XY:              -4.70, 1.71
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 5.0m at 180°
-ROBOT_XY:              -5.00, 0.00
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 5.0m at 200°
-ROBOT_XY:              -4.70, -1.71
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 5.0m at 220°
-ROBOT_XY:              -3.83, -3.21
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 5.0m at 240°
-ROBOT_XY:              -2.50, -4.33
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 5.0m at 260°
-ROBOT_XY:              -0.87, -4.92
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 5.0m at 300°
-ROBOT_XY:              2.50, -4.33
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 5.0m at 320°
-ROBOT_XY:              3.83, -3.21
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
 # Grid: 5.0m at 340°
-ROBOT_XY:              4.70, -1.71
-CURRENT_TURRET_DEGREE: 0
-CURRENT_HOOD_DEGREE:   0
----
