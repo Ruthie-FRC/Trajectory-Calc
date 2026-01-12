@@ -198,38 +198,37 @@ public class TurretTrajectoryTester {
         // Optimized comprehensive search for 100% success rate
         // Smart exhaustive search - focus on relevant parameter ranges
         
-        // Build pitch angle list - COMPREHENSIVE COVERAGE (time is not a concern)
-        // Priority: COMPREHENSIVENESS - test every viable angle thoroughly
+        // Build pitch angle list - FAST INTELLIGENT SEARCH (target: <0.1 second)
+        // Use smart heuristics around geometric estimate with coarse sampling
         java.util.Set<Double> pitchAngleSet = new java.util.HashSet<>();
         
-        // Ultra-comprehensive: test every 0.5° in a wide range around geometric estimate
-        double comprehensiveRange = 40.0;  // ±40° around estimate for thorough coverage
-        for (double offset = -comprehensiveRange; offset <= comprehensiveRange; offset += 0.5) {
+        // Smart sampling: test geometric estimate ±15° with 3° steps
+        for (double offset = -15.0; offset <= 15.0; offset += 3.0) {
             double angle = geometricPitch + offset;
             if (angle >= 5.0 && angle <= 85.0) {
                 pitchAngleSet.add(angle);
             }
         }
         
-        // Add comprehensive absolute angle coverage to ensure no solution is missed
+        // Add a few key absolute angles based on distance (fast lookup table approach)
         if (distanceToTarget < 1.5) {
-            // Ultra-close: every 0.5° from 50-85°
-            for (double angle = 50.0; angle <= 85.0; angle += 0.5) {
+            // Ultra-close: test steep angles
+            for (double angle = 60.0; angle <= 80.0; angle += 5.0) {
                 pitchAngleSet.add(angle);
             }
         } else if (distanceToTarget < 3.0) {
-            // Very close: every 0.5° from 35-75°
-            for (double angle = 35.0; angle <= 75.0; angle += 0.5) {
+            // Close: test high arcs
+            for (double angle = 45.0; angle <= 70.0; angle += 5.0) {
                 pitchAngleSet.add(angle);
             }
         } else if (distanceToTarget < 6.0) {
-            // Close-medium: every 0.5° from 25-65°
-            for (double angle = 25.0; angle <= 65.0; angle += 0.5) {
+            // Medium: test mid-range arcs
+            for (double angle = 35.0; angle <= 55.0; angle += 5.0) {
                 pitchAngleSet.add(angle);
             }
-        } else if (distanceToTarget <= 10.0) {
-            // Medium to long range: every 0.5° from 15-60°
-            for (double angle = 15.0; angle <= 60.0; angle += 0.5) {
+        } else {
+            // Long: test optimal range arcs
+            for (double angle = 30.0; angle <= 50.0; angle += 5.0) {
                 pitchAngleSet.add(angle);
             }
         }
@@ -238,38 +237,28 @@ public class TurretTrajectoryTester {
         Double[] pitchAngles = pitchAngleSet.toArray(new Double[0]);
         java.util.Arrays.sort(pitchAngles);
         
-        // Speed configuration - COMPREHENSIVE (test many speeds thoroughly)
-        // Comprehensiveness is priority - test 40 speeds for thorough coverage
-        int speedSteps = 40;  // Maximum comprehensiveness
+        // Speed configuration - FAST (minimal steps)
+        int speedSteps = 8;  // Just enough for good coverage
         double speedStep = (maxSpeed - minSpeed) / speedSteps;
         
-        // Yaw offsets - COMPREHENSIVE COVERAGE
-        // Test every possible yaw angle thoroughly - comprehensiveness matters most
+        // Yaw offsets - MINIMAL SMART SAMPLING
+        // Focus on target direction with minimal offsets
         java.util.List<Double> yawOffsetList = new java.util.ArrayList<>();
         yawOffsetList.add(0.0);
-        // Ultra-fine near center (every 0.25° for ±4°)
-        for (double i = 0.25; i <= 4.0; i += 0.25) {
+        // Just test a few key offsets
+        for (double i = 2.0; i <= 8.0; i += 2.0) {
             yawOffsetList.add(i);
             yawOffsetList.add(-i);
         }
-        // Very fine nearby (every 0.5° for 4.5-12°)
-        for (double i = 4.5; i <= 12.0; i += 0.5) {
-            yawOffsetList.add(i);
-            yawOffsetList.add(-i);
-        }
-        // Fine resolution further out (every 1° for 13-25°)
-        for (double i = 13.0; i <= 25.0; i += 1.0) {
-            yawOffsetList.add(i);
-            yawOffsetList.add(-i);
-        }
-        // Still test broader range (every 2° for 27-35°)
-        for (double i = 27.0; i <= 35.0; i += 2.0) {
-            yawOffsetList.add(i);
-            yawOffsetList.add(-i);
-        }
+        // Test a couple wider angles
+        yawOffsetList.add(12.0);
+        yawOffsetList.add(-12.0);
+        yawOffsetList.add(18.0);
+        yawOffsetList.add(-18.0);
         double[] yawOffsets = yawOffsetList.stream().mapToDouble(Double::doubleValue).toArray();
         
-        // Optimized search with early exit
+        // Fast intelligent search with early exit when excellent solution found
+        // Target: <0.1 second computation time
         for (int s = 0; s <= speedSteps; s++) {
             double testSpeed = minSpeed + s * speedStep;
             if (testSpeed > maxSpeed) continue;
@@ -290,7 +279,6 @@ public class TurretTrajectoryTester {
                         // 2. Ball flight time (25%) - Minimize time to target
                         // 3. Minimum turret movement (20%) - Prefer solutions near current position
                         // 4. Ball speed/RPM (10%) - Use minimum viable speed
-                        // Note: Comprehensiveness handled by exhaustive search, not scoring
                         
                         // Priority 1: ACCURACY (45% total weight)
                         // Entry score already accounts for center-targeting and rim clearance
@@ -331,38 +319,42 @@ public class TurretTrajectoryTester {
                             bestYaw = testYaw;
                             bestPitch = testPitch;
                             
-                            // Don't early exit - be comprehensive and test everything
-                            // (Removed early exit for maximum comprehensiveness)
+                            // Early exit if we found an excellent solution (fast mode)
+                            if (bestScore > 0.85) {
+                                break;  // Exit yaw loop
+                            }
                         }
                     }
                 }
                 
-                // Continue testing all combinations - no early exit
+                // Early exit if excellent solution found
+                if (bestScore > 0.85) {
+                    break;  // Exit pitch loop
+                }
             }
             
-            // Continue testing all speeds - no early exit for comprehensiveness
+            // Early exit if excellent solution found
+            if (bestScore > 0.85) {
+                break;  // Exit speed loop
+            }
         }
         
-        // Phase 2: Ultra-fine refinement around best solution for maximum precision
-        if (bestResult != null && bestResult.hitTarget && bestScore < 0.95) {
-            // Ultra-fine-tune around the best solution with 0.1° precision
-            double ultraFineSpeedStep = Math.max(0.1, (maxSpeed - minSpeed) / 100.0);
-            double[] ultraFinePitchOffsets = {0, -0.25, 0.25, -0.5, 0.5, -0.75, 0.75, -1.0, 1.0, 
-                                               -1.25, 1.25, -1.5, 1.5, -1.75, 1.75, -2.0, 2.0,
-                                               -2.5, 2.5, -3.0, 3.0};
-            double[] ultraFineYawOffsets = {0, -0.25, 0.25, -0.5, 0.5, -0.75, 0.75, -1.0, 1.0,
-                                            -1.25, 1.25, -1.5, 1.5, -1.75, 1.75, -2.0, 2.0,
-                                            -2.5, 2.5};
+        // Phase 2: Fine refinement around best solution (only if needed and time permits)
+        if (bestResult != null && bestResult.hitTarget && bestScore < 0.90) {
+            // Fine-tune around the best solution with 1° precision
+            double fineSpeedStep = Math.max(0.5, (maxSpeed - minSpeed) / 20.0);
+            double[] finePitchOffsets = {0, -1.0, 1.0, -2.0, 2.0, -3.0, 3.0};
+            double[] fineYawOffsets = {0, -1.0, 1.0, -2.0, 2.0, -3.0, 3.0};
             
-            for (double speedOffset = -5 * ultraFineSpeedStep; speedOffset <= 5 * ultraFineSpeedStep; speedOffset += ultraFineSpeedStep) {
+            for (double speedOffset = -2 * fineSpeedStep; speedOffset <= 2 * fineSpeedStep; speedOffset += fineSpeedStep) {
                 double testSpeed = bestSpeed + speedOffset;
                 if (testSpeed < minSpeed || testSpeed > maxSpeed) continue;
                 
-                for (double pitchOffset : ultraFinePitchOffsets) {
+                for (double pitchOffset : finePitchOffsets) {
                     double testPitch = bestPitch + pitchOffset;
                     if (testPitch < 5.0 || testPitch > 85.0) continue;
                     
-                    for (double yawOffset : ultraFineYawOffsets) {
+                    for (double yawOffset : fineYawOffsets) {
                         double testYaw = bestYaw + yawOffset;
                         
                         TrajectorySimulator.TrajectoryResult result = trajSimulator.simulateWithShooterModel(
@@ -388,10 +380,17 @@ public class TurretTrajectoryTester {
                                 bestSpeed = testSpeed;
                                 bestYaw = testYaw;
                                 bestPitch = testPitch;
+                                
+                                // Early exit if excellent
+                                if (bestScore > 0.90) {
+                                    break;
+                                }
                             }
                         }
                     }
+                    if (bestScore > 0.90) break;
                 }
+                if (bestScore > 0.90) break;
             }
         }
         
