@@ -198,46 +198,34 @@ public class TurretTrajectoryTester {
         // Optimized comprehensive search for 100% success rate
         // Smart exhaustive search - focus on relevant parameter ranges
         
-        // Build pitch angle list based on distance - PRECISION OPTIMIZED
+        // Build pitch angle list - OPTIMIZED FOR COMPUTATION SPEED
+        // Priority 2: Computation speed - Use coarse sampling with intelligent coverage
         java.util.Set<Double> pitchAngleSet = new java.util.HashSet<>();
         
-        // Add angles near geometric estimate with fine resolution (every 1 degree ±35°)
-        for (int offset = -35; offset <= 35; offset += 1) {
+        // Add angles near geometric estimate with moderate resolution
+        int pitchStep = (distanceToTarget < 2.0) ? 3 : 4;  // Finer for close shots
+        int pitchRange = 30;  // ±30° around estimate
+        for (int offset = -pitchRange; offset <= pitchRange; offset += pitchStep) {
             double angle = geometricPitch + offset;
             if (angle >= 5.0 && angle <= 85.0) {
                 pitchAngleSet.add(angle);
             }
         }
         
-        // Add distance-appropriate absolute angles for comprehensive coverage
-        if (distanceToTarget < 1.0) {
-            // Ultra-close: very steep angles 60-85° (every 1°)
-            for (double angle = 60.0; angle <= 85.0; angle += 1.0) {
-                pitchAngleSet.add(angle);
-            }
-        } else if (distanceToTarget < 2.0) {
-            // Very close: steep angles 45-80° (every 1.5°)
-            for (double angle = 45.0; angle <= 80.0; angle += 1.5) {
+        // Add key absolute angles based on distance (fewer angles for speed)
+        if (distanceToTarget < 1.5) {
+            // Ultra-close: steep angles (every 5°)
+            for (double angle = 55.0; angle <= 80.0; angle += 5.0) {
                 pitchAngleSet.add(angle);
             }
         } else if (distanceToTarget < 4.0) {
-            // Close-medium: 30-70° (every 1.5°)
-            for (double angle = 30.0; angle <= 70.0; angle += 1.5) {
-                pitchAngleSet.add(angle);
-            }
-        } else if (distanceToTarget < 7.0) {
-            // Medium: 20-60° (every 2°)
-            for (double angle = 20.0; angle <= 60.0; angle += 2.0) {
+            // Close-medium (every 5°)
+            for (double angle = 30.0; angle <= 65.0; angle += 5.0) {
                 pitchAngleSet.add(angle);
             }
         } else if (distanceToTarget <= 10.0) {
-            // Long range up to 10m: 15-55° (every 1.5°)
-            for (double angle = 15.0; angle <= 55.0; angle += 1.5) {
-                pitchAngleSet.add(angle);
-            }
-        } else {
-            // Beyond 10m: 15-50° (every 2.5°) - less priority since we focus on ≤10m
-            for (double angle = 15.0; angle <= 50.0; angle += 2.5) {
+            // Medium to long range (every 5°)
+            for (double angle = 20.0; angle <= 55.0; angle += 5.0) {
                 pitchAngleSet.add(angle);
             }
         }
@@ -246,25 +234,27 @@ public class TurretTrajectoryTester {
         Double[] pitchAngles = pitchAngleSet.toArray(new Double[0]);
         java.util.Arrays.sort(pitchAngles);
         
-        // Speed configuration - more steps for better accuracy
-        int speedSteps = 30;  // Increased from 20 to 30 for better precision
+        // Speed configuration - OPTIMIZED FOR COMPUTATION SPEED
+        // Priority 2: Reduce speed steps for faster computation
+        int speedSteps = 15;  // Reduced from 30 to 15 for 2x speed improvement
         double speedStep = (maxSpeed - minSpeed) / speedSteps;
         
-        // Yaw offsets - denser sampling for better accuracy (every 2 degrees, focus on precision)
+        // Yaw offsets - OPTIMIZED FOR COMPUTATION SPEED
+        // Coarser sampling, focused on accuracy near center
         java.util.List<Double> yawOffsetList = new java.util.ArrayList<>();
         yawOffsetList.add(0.0);
-        // Very fine near center (every 0.5° for ±2°)
-        for (double i = 0.5; i <= 2.0; i += 0.5) {
-            yawOffsetList.add(i);
-            yawOffsetList.add(-i);
-        }
-        // Fine nearby (every 1° for 2-10°)
-        for (int i = 3; i <= 10; i += 1) {
+        // Fine near center (every 1° for ±3°)
+        for (int i = 1; i <= 3; i += 1) {
             yawOffsetList.add((double) i);
             yawOffsetList.add((double) -i);
         }
-        // Medium resolution further out (every 2° for 12-20°)
-        for (int i = 12; i <= 20; i += 2) {
+        // Medium resolution (every 3° for 6-15°)
+        for (int i = 6; i <= 15; i += 3) {
+            yawOffsetList.add((double) i);
+            yawOffsetList.add((double) -i);
+        }
+        // Coarse further out (every 5° for 20-25°)
+        for (int i = 20; i <= 25; i += 5) {
             yawOffsetList.add((double) i);
             yawOffsetList.add((double) -i);
         }
@@ -286,37 +276,44 @@ public class TurretTrajectoryTester {
                         config.robotPosition, testSpeed, testYaw, testPitch, spin);
                     
                     if (result.hitTarget) {
-                        // Enhanced physics-based scoring optimized for ACCURACY and PRECISION
-                        // Priority: Accuracy > Precision > Everything else
+                        // Scoring based on user-specified priority order:
+                        // 1. Accuracy (45%) - Entry quality, rim clearance, center-targeting
+                        // 2. Computation speed (0%) - Handled by search optimization, not scoring
+                        // 3. Ball flight time (25%) - Minimize time to target
+                        // 4. Minimum turret movement (20%) - Prefer solutions near current position
+                        // 5. Ball speed/RPM (10%) - Use minimum viable speed
                         
-                        // 1. Entry score (50%): MOST IMPORTANT - How accurately ball enters target
-                        double entryComponent = result.entryScore * 0.50;
+                        // Priority 1: ACCURACY (45% total weight)
+                        // Entry score already accounts for center-targeting and rim clearance
+                        double accuracyComponent = result.entryScore * 0.45;
                         
-                        // 2. Arc quality (25%): Optimal trajectory geometry for precision
-                        // Prefer moderate arcs that are more predictable and accurate
-                        double targetHeight = config.targetPosition.z;
-                        double apexAboveTarget = result.getMaxHeight() - targetHeight;
-                        double optimalApex = 2.0;  // 2m above target for precision
-                        double apexDiff = Math.abs(apexAboveTarget - optimalApex);
-                        double arcScore = Math.max(0, 1.0 - apexDiff / 4.0);
-                        double arcComponent = arcScore * 0.25;
-                        
-                        // 3. Flight time stability (15%): Prefer controllable flight times
-                        // Optimal around 1.2-1.8s for good accuracy
+                        // Priority 3: BALL FLIGHT TIME (25% weight)
+                        // Shorter flight time = faster to target = higher score
                         double flightTime = result.trajectory.get(result.trajectory.size() - 1).time;
-                        double optimalTime = 1.5;
-                        double timeDiff = Math.abs(flightTime - optimalTime);
-                        double timeScore = Math.max(0, 1.0 - timeDiff / 2.0);
-                        double timeComponent = timeScore * 0.15;
+                        double maxReasonableTime = 2.5;  // 2.5 seconds max expected
+                        double flightTimeScore = Math.max(0, 1.0 - (flightTime / maxReasonableTime));
+                        double flightTimeComponent = flightTimeScore * 0.25;
                         
-                        // 4. Speed consistency (10%): Prefer moderate speeds for repeatability
-                        // Lower speeds within viable range = more consistent
+                        // Priority 4: MINIMUM TURRET MOVEMENT (20% weight)
+                        // Calculate angular distance from current turret position
+                        double yawDelta = Math.abs(testYaw - config.turretYawOffset);
+                        double pitchDelta = Math.abs(testPitch - config.turretPitchOffset);
+                        // Normalize to typical ranges (±180° yaw, ±90° pitch)
+                        double normalizedYawDelta = yawDelta / 180.0;
+                        double normalizedPitchDelta = pitchDelta / 90.0;
+                        // Combined angular distance (weighted equally)
+                        double angularDistance = (normalizedYawDelta + normalizedPitchDelta) / 2.0;
+                        double movementScore = Math.max(0, 1.0 - angularDistance);
+                        double movementComponent = movementScore * 0.20;
+                        
+                        // Priority 5: BALL SPEED/RPM (10% weight - lowest priority)
+                        // Prefer minimum viable speed
                         double speedRatio = (testSpeed - minSpeed) / (maxSpeed - minSpeed);
-                        double speedConsistency = 1.0 - (speedRatio * 0.4);  // Small penalty for higher speeds
-                        double speedComponent = speedConsistency * 0.10;
+                        double speedScore = 1.0 - speedRatio;  // Lower speed = higher score
+                        double speedComponent = speedScore * 0.10;
                         
-                        // Combined ACCURACY-FOCUSED score
-                        double score = entryComponent + arcComponent + timeComponent + speedComponent;
+                        // Combined score following user priority order
+                        double score = accuracyComponent + flightTimeComponent + movementComponent + speedComponent;
                         
                         if (score > bestScore) {
                             bestScore = score;
@@ -325,56 +322,56 @@ public class TurretTrajectoryTester {
                             bestYaw = testYaw;
                             bestPitch = testPitch;
                             
-                            // Early exit threshold raised for accuracy (90%+ score)
-                            if (score > 0.90) {
+                            // Early exit threshold optimized for accuracy vs computation speed balance
+                            if (score > 0.85) {
                                 break;
                             }
                         }
                     }
                 }
                 
-                // Early exit if we found an excellent shot (90%+ accuracy)
-                if (bestScore > 0.90) break;
+                // Early exit if we found an excellent shot (85%+ score)
+                if (bestScore > 0.85) break;
             }
             
-            // Early exit if we found an excellent shot (90%+ accuracy)
-            if (bestScore > 0.90) break;
+            // Early exit if we found an excellent shot (85%+ score)
+            if (bestScore > 0.85) break;
         }
         
-        // Phase 2: Ultra-fine search around best solution for precision
-        if (bestResult != null && bestResult.hitTarget && bestScore < 0.85) {
-            // Ultra-fine-tune around the best solution for maximum accuracy
-            double ultraFineSpeedStep = Math.max(0.2, (maxSpeed - minSpeed) / 80.0);
-            double[] ultraFinePitchOffsets = {0, -0.5, 0.5, -1.0, 1.0, -1.5, 1.5, -2, 2, -2.5, 2.5, -3, 3};
-            double[] ultraFineYawOffsets = {0, -0.5, 0.5, -1.0, 1.0, -1.5, 1.5, -2, 2, -2.5, 2.5};
+        // Phase 2: Fine-tune search around best solution for accuracy optimization
+        if (bestResult != null && bestResult.hitTarget && bestScore < 0.80) {
+            // Fine-tune around the best solution
+            double fineSpeedStep = Math.max(0.3, (maxSpeed - minSpeed) / 50.0);
+            double[] finePitchOffsets = {0, -1.0, 1.0, -2.0, 2.0, -3.0, 3.0};
+            double[] fineYawOffsets = {0, -1.0, 1.0, -2.0, 2.0};
             
-            for (double speedOffset = -3 * ultraFineSpeedStep; speedOffset <= 3 * ultraFineSpeedStep; speedOffset += ultraFineSpeedStep) {
+            for (double speedOffset = -3 * fineSpeedStep; speedOffset <= 3 * fineSpeedStep; speedOffset += fineSpeedStep) {
                 double testSpeed = bestSpeed + speedOffset;
                 if (testSpeed < minSpeed || testSpeed > maxSpeed) continue;
                 
-                for (double pitchOffset : ultraFinePitchOffsets) {
+                for (double pitchOffset : finePitchOffsets) {
                     double testPitch = bestPitch + pitchOffset;
                     if (testPitch < 5.0 || testPitch > 85.0) continue;
                     
-                    for (double yawOffset : ultraFineYawOffsets) {
+                    for (double yawOffset : fineYawOffsets) {
                         double testYaw = bestYaw + yawOffset;
                         
                         TrajectorySimulator.TrajectoryResult result = trajSimulator.simulateWithShooterModel(
                             config.robotPosition, testSpeed, testYaw, testPitch, spin);
                         
                         if (result.hitTarget) {
-                            // Recalculate full accuracy score
-                            double entryComponent = result.entryScore * 0.50;
-                            double targetHeight = config.targetPosition.z;
-                            double apexAboveTarget = result.getMaxHeight() - targetHeight;
-                            double arcScore = Math.max(0, 1.0 - Math.abs(apexAboveTarget - 2.0) / 4.0);
-                            double arcComponent = arcScore * 0.25;
+                            // Recalculate score with same priority order
+                            double accuracyComponent = result.entryScore * 0.45;
                             double flightTime = result.trajectory.get(result.trajectory.size() - 1).time;
-                            double timeScore = Math.max(0, 1.0 - Math.abs(flightTime - 1.5) / 2.0);
-                            double timeComponent = timeScore * 0.15;
+                            double flightTimeScore = Math.max(0, 1.0 - (flightTime / 2.5));
+                            double flightTimeComponent = flightTimeScore * 0.25;
+                            double yawDelta = Math.abs(testYaw - config.turretYawOffset);
+                            double pitchDelta = Math.abs(testPitch - config.turretPitchOffset);
+                            double angularDistance = ((yawDelta / 180.0) + (pitchDelta / 90.0)) / 2.0;
+                            double movementComponent = Math.max(0, 1.0 - angularDistance) * 0.20;
                             double speedRatio = (testSpeed - minSpeed) / (maxSpeed - minSpeed);
-                            double speedComponent = (1.0 - speedRatio * 0.4) * 0.10;
-                            double score = entryComponent + arcComponent + timeComponent + speedComponent;
+                            double speedComponent = (1.0 - speedRatio) * 0.10;
+                            double score = accuracyComponent + flightTimeComponent + movementComponent + speedComponent;
                             
                             if (score > bestScore) {
                                 bestScore = score;
