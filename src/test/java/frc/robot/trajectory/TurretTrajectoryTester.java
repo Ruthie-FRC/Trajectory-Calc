@@ -26,7 +26,7 @@ public class TurretTrajectoryTester {
     private final InverseSolver solver;
     private final SpinShotSimulator simulator;
     private final TrajectorySimulator trajSimulator;
-    private final double maxBallSpeedFPS;  // Maximum ball speed in feet per second
+    private final double maxBallSpeedMS;  // Maximum ball speed in meters per second
     private final double defaultSpinRate;
     
     // Balanced search for 100% success rate while maintaining <0.1s speed
@@ -68,7 +68,7 @@ public class TurretTrajectoryTester {
         public double requiredYawAdjust;     // Yaw adjustment needed (degrees)
         public double finalPitch;            // Final absolute pitch angle (degrees)
         public double finalYaw;              // Final absolute yaw angle (degrees)
-        public double shooterSpeed;          // Ball launch speed in feet per second
+        public double shooterSpeed;          // Ball launch speed in meters per second
         public double spinRate;              // Ball spin rate (rad/s)
         public Vector3D spinAxis;            // Spin axis vector
         public double successProbability;    // Success probability (0-1)
@@ -96,7 +96,7 @@ public class TurretTrajectoryTester {
             sb.append(String.format("    Hood Change:       %+.2f° → New position: %.2f°\n", 
                 requiredPitchAdjust, finalPitch));
             sb.append("\n");
-            sb.append(String.format("    Shooter Speed:     %.1f ft/s\n", shooterSpeed));
+            sb.append(String.format("    Shooter Speed:     %.1f m/s\n", shooterSpeed));
             
             // Determine spin type
             String spinType = "Backspin"; // Default
@@ -131,10 +131,10 @@ public class TurretTrajectoryTester {
     }
     
     public TurretTrajectoryTester() {
-        this(30.0, 200.0);  // Default 30 ft/s max speed
+        this(30.0, 200.0);  // Default 30 m/s max speed
     }
     
-    public TurretTrajectoryTester(double maxBallSpeedFPS, double defaultSpinRate) {
+    public TurretTrajectoryTester(double maxBallSpeedMS, double defaultSpinRate) {
         CalibrationParameters calibration = new CalibrationParameters();
         ProjectileProperties projectile = new ProjectileProperties();
         PhysicsModel physics = new PhysicsModel(calibration, projectile);
@@ -143,7 +143,7 @@ public class TurretTrajectoryTester {
         this.solver = new InverseSolver(trajSim);
         this.simulator = new SpinShotSimulator(calibration, projectile);
         this.trajSimulator = trajSim;
-        this.maxBallSpeedFPS = maxBallSpeedFPS;
+        this.maxBallSpeedMS = maxBallSpeedMS;
         this.defaultSpinRate = defaultSpinRate;
     }
     
@@ -162,9 +162,8 @@ public class TurretTrajectoryTester {
         
         Vector3D spin = new Vector3D(0, config.spinRate, 0); // Backspin
         
-        // Calculate max launch speed from max ball speed in feet per second
-        // Convert FPS to m/s: 1 ft/s = 0.3048 m/s
-        double maxSpeed = maxBallSpeedFPS * 0.3048;
+        // Max launch speed is directly specified in m/s
+        double maxSpeed = maxBallSpeedMS;
         
         // Calculate required yaw to point at target
         double targetYaw = Math.toDegrees(Math.atan2(dy, dx));
@@ -409,8 +408,8 @@ public class TurretTrajectoryTester {
         output.finalYaw = bestYaw;
         output.finalPitch = bestPitch;
         
-        // Convert speed from m/s to ft/s for output
-        output.shooterSpeed = bestSpeed / 0.3048;
+        // Speed is already in m/s, no conversion needed
+        output.shooterSpeed = bestSpeed;
         
         output.spinRate = config.spinRate;
         output.spinAxis = spin.normalize();
@@ -690,7 +689,7 @@ public class TurretTrajectoryTester {
         System.out.println("Turret Trajectory Tester");
         System.out.println("=======================================================");
         System.out.println("Input file: " + filename);
-        System.out.println("Max flywheel RPM: " + maxFlywheelRPM);
+        System.out.println("Max ball speed: " + maxBallSpeedMS + " m/s");
         System.out.println("Default spin: " + defaultSpinRate + " rad/s");
         System.out.println("=======================================================\n");
         
@@ -761,10 +760,10 @@ public class TurretTrajectoryTester {
      */
     public static void main(String[] args) {
         String filename = args.length > 0 ? args[0] : "test-targets.txt";
-        double maxSpeedFPS = args.length > 1 ? Double.parseDouble(args[1]) : 30.0;
+        double maxSpeedMS = args.length > 1 ? Double.parseDouble(args[1]) : 30.0;
         double spin = args.length > 2 ? Double.parseDouble(args[2]) : 200.0;
         
-        TurretTrajectoryTester tester = new TurretTrajectoryTester(maxSpeedFPS, spin);
+        TurretTrajectoryTester tester = new TurretTrajectoryTester(maxSpeedMS, spin);
         tester.processFile(filename);
     }
 }
