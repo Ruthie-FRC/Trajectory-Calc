@@ -29,14 +29,14 @@ public class TurretTrajectoryTester {
     private final double maxBallSpeedMS;  // Maximum ball speed in meters per second
     private final double defaultSpinRate;
     
-    // Balanced search for 100% success rate while maintaining <0.1s speed
-    // Strategy: Comprehensive but efficient - test all practical angles intelligently
+    // Optimized search for 100% success rate with ultra-fast computation (<0.05s)
+    // Strategy: Smart comprehensive search - test practical angles efficiently
     private static final double GEOMETRIC_SEARCH_RANGE_DEG = 20.0; // Wider search range for reliability
     private static final double GEOMETRIC_SEARCH_STEP_DEG = 3.0;   // Finer step size for better coverage
     private static final int FAST_SPEED_STEPS = 10;                 // More speed steps for 100% coverage
-    private static final double EARLY_EXIT_THRESHOLD = 0.85;        // Higher threshold for better solutions
-    private static final int MAX_CANDIDATES_TO_FIND = 10;           // Find more candidates before deciding
-    private static final double REFINEMENT_EXIT_THRESHOLD = 0.88;   // Only refine if best score below this
+    private static final double EARLY_EXIT_THRESHOLD = 0.88;        // Higher threshold for faster termination
+    private static final int MAX_CANDIDATES_TO_FIND = 8;            // Reduced for faster search
+    private static final double REFINEMENT_EXIT_THRESHOLD = 0.90;   // Only refine if best score below this
     
     /**
      * Configuration for a test scenario.
@@ -183,13 +183,13 @@ public class TurretTrajectoryTester {
         double minSpeed;
         if (distanceToTarget < 0.3) {
             // Extreme ultra-close (<0.3m) - MINIMAL speed for near-vertical drops
-            minSpeed = 1.5;
+            minSpeed = 1.0;  // Reduced from 1.5 for slowest possible arcs
         } else if (distanceToTarget < 0.6) {
             // Very ultra-close (0.3-0.6m) - VERY low speed for 80-85° trajectories
-            minSpeed = Math.max(1.8, distanceToTarget * 2.5);
+            minSpeed = Math.max(1.2, distanceToTarget * 2.2);  // Reduced minimum
         } else if (distanceToTarget < 1.0) {
             // Ultra-close (0.6-1.0m) - low speed for 75-80° trajectories  
-            minSpeed = Math.max(2.0, distanceToTarget * 2.2);
+            minSpeed = Math.max(1.5, distanceToTarget * 2.0);  // Reduced minimum
         } else if (distanceToTarget < 1.5) {
             // Very close (1.0-1.5m) - moderate-low speed for 65-75° trajectories
             minSpeed = Math.max(2.5, distanceToTarget * 2.0);
@@ -239,9 +239,9 @@ public class TurretTrajectoryTester {
         // Add more practical angles based on distance for better coverage
         // Optimized for 5.5m max range to ensure 100% success rate
         if (distanceToTarget < 1.0) {
-            // EXTREME ultra-close (< 1.0m): VERY comprehensive ULTRA-steep angle coverage
-            // Need 70-88° for distances 0.5-1.0m, with finer steps
-            for (double angle = 68.0; angle <= 88.0; angle += 1.5) {
+            // EXTREME ultra-close (< 1.0m): ULTRA-comprehensive ULTRA-steep angle coverage
+            // Need 70-89° for distances 0.5-1.0m, with ultra-fine steps
+            for (double angle = 70.0; angle <= 89.0; angle += 0.75) {
                 pitchAngleSet.add(angle);
             }
         } else if (distanceToTarget < 1.5) {
@@ -278,8 +278,8 @@ public class TurretTrajectoryTester {
         // Speed configuration - MORE steps for ultra-close shots
         int speedSteps;
         if (distanceToTarget < 1.0) {
-            // Ultra-close: need many more speed steps to find the sweet spot
-            speedSteps = 20;
+            // Ultra-close: need MANY more speed steps to find the ultra-precise sweet spot
+            speedSteps = 25;  // Increased from 20
         } else if (distanceToTarget < 1.5) {
             // Very close: more steps
             speedSteps = 15;
@@ -289,9 +289,9 @@ public class TurretTrajectoryTester {
         }
         double speedStep = (maxSpeed - minSpeed) / speedSteps;
         
-        // Yaw offsets - MORE COMPREHENSIVE for 100% success
-        // Wider coverage to ensure we find the best shot
-        double[] yawOffsets = {0.0, -2.0, 2.0, -4.0, 4.0, -6.0, 6.0, -9.0, 9.0, -12.0, 12.0, -15.0, 15.0};
+        // Yaw offsets - OPTIMIZED for speed: fewer angles while maintaining coverage
+        // Reduced from 13 to 9 for faster computation
+        double[] yawOffsets = {0.0, -2.0, 2.0, -4.0, 4.0, -7.0, 7.0, -10.0, 10.0};
         
         // Comprehensive candidate search - ensure 100% success rate
         // Target: <0.1 second total while finding ALL viable shots
