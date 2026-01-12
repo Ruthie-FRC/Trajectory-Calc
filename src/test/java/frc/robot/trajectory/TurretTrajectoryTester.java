@@ -26,18 +26,17 @@ public class TurretTrajectoryTester {
     private final InverseSolver solver;
     private final SpinShotSimulator simulator;
     private final TrajectorySimulator trajSimulator;
-    private final double maxFlywheelRPM;
+    private final double maxBallSpeedFPS;  // Maximum ball speed in feet per second
     private final double defaultSpinRate;
-    private final double wheelDiameterMeters = 0.1016; // 4 inches
     
-    // Ultra-fast search heuristics (optimized for <0.1 second total computation)
-    // Strategy: Quickly identify few practical candidates, then pick the best
-    private static final double GEOMETRIC_SEARCH_RANGE_DEG = 12.0; // Search range around geometric estimate
-    private static final double GEOMETRIC_SEARCH_STEP_DEG = 4.0;   // Step size for geometric search
-    private static final int FAST_SPEED_STEPS = 5;                  // Number of speeds to try (min, 25%, 50%, 75%, max)
-    private static final double EARLY_EXIT_THRESHOLD = 0.75;        // Exit after finding good candidates (lower = faster)
-    private static final int MAX_CANDIDATES_TO_FIND = 5;            // Stop after finding this many viable shots
-    private static final double REFINEMENT_EXIT_THRESHOLD = 0.80;   // Only refine if best score below this
+    // Balanced search for 100% success rate while maintaining <0.1s speed
+    // Strategy: Comprehensive but efficient - test all practical angles intelligently
+    private static final double GEOMETRIC_SEARCH_RANGE_DEG = 20.0; // Wider search range for reliability
+    private static final double GEOMETRIC_SEARCH_STEP_DEG = 3.0;   // Finer step size for better coverage
+    private static final int FAST_SPEED_STEPS = 10;                 // More speed steps for 100% coverage
+    private static final double EARLY_EXIT_THRESHOLD = 0.85;        // Higher threshold for better solutions
+    private static final int MAX_CANDIDATES_TO_FIND = 10;           // Find more candidates before deciding
+    private static final double REFINEMENT_EXIT_THRESHOLD = 0.88;   // Only refine if best score below this
     
     /**
      * Configuration for a test scenario.
@@ -69,7 +68,7 @@ public class TurretTrajectoryTester {
         public double requiredYawAdjust;     // Yaw adjustment needed (degrees)
         public double finalPitch;            // Final absolute pitch angle (degrees)
         public double finalYaw;              // Final absolute yaw angle (degrees)
-        public double shooterRPM;            // Shooter motor RPM
+        public double shooterSpeed;          // Ball launch speed in feet per second
         public double spinRate;              // Ball spin rate (rad/s)
         public Vector3D spinAxis;            // Spin axis vector
         public double successProbability;    // Success probability (0-1)
@@ -97,7 +96,7 @@ public class TurretTrajectoryTester {
             sb.append(String.format("    Hood Change:       %+.2f° → New position: %.2f°\n", 
                 requiredPitchAdjust, finalPitch));
             sb.append("\n");
-            sb.append(String.format("    Shooter Motor:     %.0f RPM (4\" wheels)\n", shooterRPM));
+            sb.append(String.format("    Shooter Speed:     %.1f ft/s\n", shooterSpeed));
             
             // Determine spin type
             String spinType = "Backspin"; // Default
@@ -132,10 +131,10 @@ public class TurretTrajectoryTester {
     }
     
     public TurretTrajectoryTester() {
-        this(5000.0, 200.0);  // Default 5000 RPM
+        this(30.0, 200.0);  // Default 30 ft/s max speed
     }
     
-    public TurretTrajectoryTester(double maxFlywheelRPM, double defaultSpinRate) {
+    public TurretTrajectoryTester(double maxBallSpeedFPS, double defaultSpinRate) {
         CalibrationParameters calibration = new CalibrationParameters();
         ProjectileProperties projectile = new ProjectileProperties();
         PhysicsModel physics = new PhysicsModel(calibration, projectile);
@@ -144,7 +143,7 @@ public class TurretTrajectoryTester {
         this.solver = new InverseSolver(trajSim);
         this.simulator = new SpinShotSimulator(calibration, projectile);
         this.trajSimulator = trajSim;
-        this.maxFlywheelRPM = maxFlywheelRPM;
+        this.maxBallSpeedFPS = maxBallSpeedFPS;
         this.defaultSpinRate = defaultSpinRate;
     }
     
@@ -163,9 +162,9 @@ public class TurretTrajectoryTester {
         
         Vector3D spin = new Vector3D(0, config.spinRate, 0); // Backspin
         
-        // Calculate max launch speed from max RPM
-        double wheelCircumference = Math.PI * wheelDiameterMeters;
-        double maxSpeed = (maxFlywheelRPM * wheelCircumference) / 60.0;
+        // Calculate max launch speed from max ball speed in feet per second
+        // Convert FPS to m/s: 1 ft/s = 0.3048 m/s
+        double maxSpeed = maxBallSpeedFPS * 0.3048;
         
         // Calculate required yaw to point at target
         double targetYaw = Math.toDegrees(Math.atan2(dy, dx));
@@ -217,35 +216,28 @@ public class TurretTrajectoryTester {
             }
         }
         
-        // Add only most practical angles based on distance (fewer options)
-        // Skip impractical angles entirely
+        // Add more practical angles based on distance for better coverage
+        // More options to ensure 100% success rate
         if (distanceToTarget < 1.5) {
-            // Ultra-close: only very steep angles work
-            pitchAngleSet.add(65.0);
-            pitchAngleSet.add(70.0);
-            pitchAngleSet.add(75.0);
-            pitchAngleSet.add(80.0);
+            // Ultra-close: comprehensive steep angle coverage
+            for (double angle = 60.0; angle <= 85.0; angle += 3.0) {
+                pitchAngleSet.add(angle);
+            }
         } else if (distanceToTarget < 3.0) {
-            // Close: only high arcs work
-            pitchAngleSet.add(50.0);
-            pitchAngleSet.add(57.0);
-            pitchAngleSet.add(65.0);
-            pitchAngleSet.add(72.0);
-            pitchAngleSet.add(80.0);
+            // Close: comprehensive high arc coverage
+            for (double angle = 45.0; angle <= 80.0; angle += 3.0) {
+                pitchAngleSet.add(angle);
+            }
         } else if (distanceToTarget < 6.0) {
-            // Medium: mid-range arcs
-            pitchAngleSet.add(35.0);
-            pitchAngleSet.add(42.0);
-            pitchAngleSet.add(50.0);
-            pitchAngleSet.add(57.0);
-            pitchAngleSet.add(65.0);
+            // Medium: comprehensive mid-range coverage
+            for (double angle = 30.0; angle <= 70.0; angle += 3.0) {
+                pitchAngleSet.add(angle);
+            }
         } else {
-            // Long: optimal trajectory range
-            pitchAngleSet.add(30.0);
-            pitchAngleSet.add(37.0);
-            pitchAngleSet.add(45.0);
-            pitchAngleSet.add(52.0);
-            pitchAngleSet.add(60.0);
+            // Long: comprehensive optimal trajectory coverage
+            for (double angle = 20.0; angle <= 65.0; angle += 3.0) {
+                pitchAngleSet.add(angle);
+            }
         }
         
         // Convert to sorted array
@@ -256,11 +248,12 @@ public class TurretTrajectoryTester {
         int speedSteps = FAST_SPEED_STEPS;
         double speedStep = (maxSpeed - minSpeed) / speedSteps;
         
-        // Yaw offsets - MINIMAL (only most critical angles)
-        double[] yawOffsets = {0.0, -3.0, 3.0, -9.0, 9.0};
+        // Yaw offsets - MORE COMPREHENSIVE for 100% success
+        // Wider coverage to ensure we find the best shot
+        double[] yawOffsets = {0.0, -2.0, 2.0, -4.0, 4.0, -6.0, 6.0, -9.0, 9.0, -12.0, 12.0, -15.0, 15.0};
         
-        // Ultra-fast candidate search - find few practical shots quickly
-        // Target: <0.1 second total from start to finish
+        // Comprehensive candidate search - ensure 100% success rate
+        // Target: <0.1 second total while finding ALL viable shots
         int candidatesFound = 0;
         for (int s = 0; s <= speedSteps; s++) {
             double testSpeed = minSpeed + s * speedStep;
@@ -324,33 +317,34 @@ public class TurretTrajectoryTester {
                             bestYaw = testYaw;
                             bestPitch = testPitch;
                             
-                            // Ultra-aggressive early exit: stop after finding good candidates
-                            if (bestScore > EARLY_EXIT_THRESHOLD || candidatesFound >= MAX_CANDIDATES_TO_FIND) {
+                            // Smart early exit: only if we found an excellent solution
+                            // Otherwise keep searching for better options
+                            if (bestScore > EARLY_EXIT_THRESHOLD && candidatesFound >= MAX_CANDIDATES_TO_FIND) {
                                 break;  // Exit yaw loop
                             }
                         }
                     }
                 }
                 
-                // Early exit if found enough good candidates
-                if (bestScore > EARLY_EXIT_THRESHOLD || candidatesFound >= MAX_CANDIDATES_TO_FIND) {
+                // Early exit only if found excellent candidates
+                if (bestScore > EARLY_EXIT_THRESHOLD && candidatesFound >= MAX_CANDIDATES_TO_FIND) {
                     break;  // Exit pitch loop
                 }
             }
             
-            // Early exit if found enough good candidates
-            if (bestScore > EARLY_EXIT_THRESHOLD || candidatesFound >= MAX_CANDIDATES_TO_FIND) {
+            // Early exit only if found excellent candidates
+            if (bestScore > EARLY_EXIT_THRESHOLD && candidatesFound >= MAX_CANDIDATES_TO_FIND) {
                 break;  // Exit speed loop
             }
         }
         
-        // Phase 2: Quick refinement only if best candidate isn't excellent
-        // Skip refinement if we already found a great solution
+        // Phase 2: Refinement for near-perfect accuracy
+        // More thorough refinement to ensure we find the absolute best
         if (bestResult != null && bestResult.hitTarget && bestScore < REFINEMENT_EXIT_THRESHOLD) {
-            // Very quick refinement with minimal search space
-            double fineSpeedStep = Math.max(0.5, (maxSpeed - minSpeed) / 10.0);
-            double[] finePitchOffsets = {0, -2.0, 2.0};  // Only ±2° refinement
-            double[] fineYawOffsets = {0, -2.0, 2.0};    // Only ±2° refinement
+            // More comprehensive refinement with finer steps
+            double fineSpeedStep = Math.max(0.3, (maxSpeed - minSpeed) / 15.0);
+            double[] finePitchOffsets = {0, -1.5, 1.5, -3.0, 3.0};  // ±3° refinement with finer steps
+            double[] fineYawOffsets = {0, -1.5, 1.5, -3.0, 3.0};    // ±3° refinement with finer steps
             
             for (double speedOffset = -fineSpeedStep; speedOffset <= fineSpeedStep; speedOffset += fineSpeedStep) {
                 double testSpeed = bestSpeed + speedOffset;
@@ -415,8 +409,8 @@ public class TurretTrajectoryTester {
         output.finalYaw = bestYaw;
         output.finalPitch = bestPitch;
         
-        // Convert speed to shooter RPM
-        output.shooterRPM = (bestSpeed / wheelCircumference) * 60.0;
+        // Convert speed from m/s to ft/s for output
+        output.shooterSpeed = bestSpeed / 0.3048;
         
         output.spinRate = config.spinRate;
         output.spinAxis = spin.normalize();
@@ -767,10 +761,10 @@ public class TurretTrajectoryTester {
      */
     public static void main(String[] args) {
         String filename = args.length > 0 ? args[0] : "test-targets.txt";
-        double maxRPM = args.length > 1 ? Double.parseDouble(args[1]) : 5000.0;
+        double maxSpeedFPS = args.length > 1 ? Double.parseDouble(args[1]) : 30.0;
         double spin = args.length > 2 ? Double.parseDouble(args[2]) : 200.0;
         
-        TurretTrajectoryTester tester = new TurretTrajectoryTester(maxRPM, spin);
+        TurretTrajectoryTester tester = new TurretTrajectoryTester(maxSpeedFPS, spin);
         tester.processFile(filename);
     }
 }
