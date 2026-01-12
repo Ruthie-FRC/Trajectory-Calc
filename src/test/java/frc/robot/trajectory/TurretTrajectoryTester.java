@@ -178,18 +178,24 @@ public class TurretTrajectoryTester {
         
         // First, try to find ANY trajectory that hits by comprehensive search
         // Search space: speeds from reasonable minimum to max, pitches around geometric estimate
-        // For very close shots, use lower minimum speed; for longer shots within 10ft, ensure we search full range
-        // Determine minimum speed based on distance (practical heuristic for 10ft max range)
+        // For very close shots, use lower minimum speed; for longer shots within 17ft, ensure we search full range
+        // Determine minimum speed based on distance (practical heuristic for 17ft max range)
         double minSpeed;
         if (distanceToTarget < 0.6) {
             // Very close shots (< 2 feet) need lower speeds to avoid overshooting
             minSpeed = Math.max(3.0, distanceToTarget * 5.0);
+        } else if (distanceToTarget > 4.27) {
+            // Beyond 14 feet - use higher minimum speeds for extended range
+            minSpeed = Math.max(7.5, distanceToTarget * 1.5);
+        } else if (distanceToTarget > 3.66) {
+            // 12-14 feet range - moderate-high speed
+            minSpeed = Math.max(7.0, distanceToTarget * 1.8);
         } else if (distanceToTarget > 3.048) {
-            // Beyond 10 feet - use higher minimum speeds
-            minSpeed = Math.max(8.0, distanceToTarget * 2.5);
+            // 10-12 feet range - moderate speed
+            minSpeed = Math.max(6.5, distanceToTarget * 2.0);
         } else if (distanceToTarget > 2.4) {
             // 8-10 feet range - moderate speed
-            minSpeed = Math.max(7.0, distanceToTarget * 2.0);
+            minSpeed = Math.max(6.0, distanceToTarget * 2.0);
         } else if (distanceToTarget > 1.5) {
             // 5-8 feet range - moderate-low speed
             minSpeed = Math.max(5.0, distanceToTarget * 2.5);
@@ -223,7 +229,7 @@ public class TurretTrajectoryTester {
         }
         
         // Add more practical angles based on distance for better coverage
-        // Optimized for 10 feet max range to ensure 100% success rate
+        // Optimized for 17 feet max range to ensure 100% success rate
         if (distanceToTarget < 0.46) {
             // Ultra-close (< 1.5 feet): comprehensive steep angle coverage
             for (double angle = 60.0; angle <= 85.0; angle += 3.0) {
@@ -239,9 +245,14 @@ public class TurretTrajectoryTester {
             for (double angle = 30.0; angle <= 70.0; angle += 3.0) {
                 pitchAngleSet.add(angle);
             }
-        } else {
-            // Long (7-10 feet): comprehensive optimal trajectory coverage
+        } else if (distanceToTarget < 3.66) {
+            // Long (7-12 feet): comprehensive optimal trajectory coverage
             for (double angle = 20.0; angle <= 65.0; angle += 3.0) {
+                pitchAngleSet.add(angle);
+            }
+        } else {
+            // Very long (12-17 feet): comprehensive extended range coverage
+            for (double angle = 15.0; angle <= 60.0; angle += 3.0) {
                 pitchAngleSet.add(angle);
             }
         }
