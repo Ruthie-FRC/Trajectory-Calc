@@ -32,7 +32,8 @@ public class MinPitchAngleAnalyzer {
         System.out.println();
         
         // Test with increasingly higher minimum angles until we start failing
-        double[] testMinAngles = {0.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0};
+        // Extended range to ensure we capture the actual minimum used (found to be 45°)
+        double[] testMinAngles = {0.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0};
         
         for (double minAngle : testMinAngles) {
             System.out.println("Testing with minimum pitch angle: " + minAngle + "°");

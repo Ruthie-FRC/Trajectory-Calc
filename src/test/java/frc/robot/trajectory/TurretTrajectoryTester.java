@@ -846,7 +846,7 @@ public class TurretTrajectoryTester {
         String filename = args.length > 0 ? args[0] : "test-targets.txt";
         double maxSpeedMS = args.length > 1 ? Double.parseDouble(args[1]) : 30.0;
         double spin = args.length > 2 ? Double.parseDouble(args[2]) : 200.0;
-        double minPitch = args.length > 3 ? Double.parseDouble(args[3]) : 5.0;
+        double minPitch = args.length > 3 ? Double.parseDouble(args[3]) : 45.0;  // Default to 45° minimum
         
         TurretTrajectoryTester tester = new TurretTrajectoryTester(maxSpeedMS, spin, minPitch);
         tester.processFile(filename);
