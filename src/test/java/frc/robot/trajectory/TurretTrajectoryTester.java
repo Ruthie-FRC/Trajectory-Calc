@@ -28,6 +28,7 @@ public class TurretTrajectoryTester {
     private final TrajectorySimulator trajSimulator;
     private final double maxBallSpeedMS;  // Maximum ball speed in meters per second
     private final double defaultSpinRate;
+    private final double minPitchAngleDeg;  // Configurable minimum pitch angle
     
     // Optimized search for 100% success rate with FAST computation (<500ms target)
     // Strategy: Aggressive early exit with hard limits, balanced for close range
@@ -134,10 +135,14 @@ public class TurretTrajectoryTester {
     }
     
     public TurretTrajectoryTester() {
-        this(30.0, 200.0);  // Default 30 ft/s max speed
+        this(30.0, 200.0, 5.0);  // Default 30 ft/s max speed, 5° min pitch
     }
     
     public TurretTrajectoryTester(double maxBallSpeedFPS, double defaultSpinRate) {
+        this(maxBallSpeedFPS, defaultSpinRate, 5.0);  // Default 5° min pitch
+    }
+    
+    public TurretTrajectoryTester(double maxBallSpeedFPS, double defaultSpinRate, double minPitchAngleDeg) {
         // Convert ft/s to m/s for internal physics calculations
         double maxBallSpeedMS = maxBallSpeedFPS * 0.3048;
         CalibrationParameters calibration = new CalibrationParameters();
@@ -150,6 +155,7 @@ public class TurretTrajectoryTester {
         this.trajSimulator = trajSim;
         this.maxBallSpeedMS = maxBallSpeedMS;
         this.defaultSpinRate = defaultSpinRate;
+        this.minPitchAngleDeg = minPitchAngleDeg;
     }
     
     /**
@@ -232,7 +238,7 @@ public class TurretTrajectoryTester {
             double angle = geometricPitch + offset;
             // Allow up to 89° for ultra-close shots
             double maxAngle = (distanceToTarget < 1.0) ? 89.0 : 85.0;
-            if (angle >= 5.0 && angle <= maxAngle) {
+            if (angle >= minPitchAngleDeg && angle <= maxAngle) {
                 pitchAngleSet.add(angle);
             }
         }
@@ -299,7 +305,7 @@ public class TurretTrajectoryTester {
             for (double testPitch : pitchAngles) {
                 // Allow steeper angles for ultra-close shots
                 double maxAllowedPitch = (distanceToTarget < 1.0) ? 89.0 : 85.0;
-                if (testPitch < 5.0 || testPitch > maxAllowedPitch) continue;
+                if (testPitch < minPitchAngleDeg || testPitch > maxAllowedPitch) continue;
                 
                 for (double yawOffset : yawOffsets) {
                     double testYaw = targetYaw + yawOffset;
@@ -407,7 +413,7 @@ public class TurretTrajectoryTester {
                 
                 for (double pitchOffset : finePitchOffsets) {
                     double testPitch = bestPitch + pitchOffset;
-                    if (testPitch < 5.0 || testPitch > 85.0) continue;
+                    if (testPitch < minPitchAngleDeg || testPitch > 85.0) continue;
                     
                     for (double yawOffset : fineYawOffsets) {
                         double testYaw = bestYaw + yawOffset;
@@ -840,8 +846,9 @@ public class TurretTrajectoryTester {
         String filename = args.length > 0 ? args[0] : "test-targets.txt";
         double maxSpeedMS = args.length > 1 ? Double.parseDouble(args[1]) : 30.0;
         double spin = args.length > 2 ? Double.parseDouble(args[2]) : 200.0;
+        double minPitch = args.length > 3 ? Double.parseDouble(args[3]) : 5.0;
         
-        TurretTrajectoryTester tester = new TurretTrajectoryTester(maxSpeedMS, spin);
+        TurretTrajectoryTester tester = new TurretTrajectoryTester(maxSpeedMS, spin, minPitch);
         tester.processFile(filename);
     }
 }
