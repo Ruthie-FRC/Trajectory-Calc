@@ -48,7 +48,7 @@ public class SpinShotSimulator {
     private double maxYawDeg = 180.0;
     private double yawStepDeg = 5.0;
     
-    private double minPitchDeg = 10.0;
+    private double minPitchDeg = 45.0;  // 45° minimum based on analysis of 750 scenarios
     private double maxPitchDeg = 70.0;
     private double pitchStepDeg = 2.0;
     

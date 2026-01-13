@@ -7,7 +7,8 @@
 # FORMAT (each section on separate lines for readability):
 #   ROBOT_XY:              x, y (meters on field - shooter height is constant at 0.5m)
 #   CURRENT_TURRET_DEGREE: yaw (0-360°, where 0° = robot forward)
-#   CURRENT_HOOD_DEGREE:   pitch (0-90°, where 0° = horizontal, 90° = vertical)
+#   CURRENT_HOOD_DEGREE:   pitch (45-90°, where 0° = horizontal, 90° = vertical)
+#                          NOTE: Analysis shows minimum pitch used is 45°
 #   LAUNCH_PARAMS:         speed, spin (m/s, rad/s) [optional - uses defaults if omitted]
 #   ---
 #

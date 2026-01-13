@@ -135,11 +135,11 @@ public class TurretTrajectoryTester {
     }
     
     public TurretTrajectoryTester() {
-        this(30.0, 200.0, 5.0);  // Default 30 ft/s max speed, 5° min pitch
+        this(30.0, 200.0, 45.0);  // Default 30 ft/s max speed, 45° min pitch
     }
     
     public TurretTrajectoryTester(double maxBallSpeedFPS, double defaultSpinRate) {
-        this(maxBallSpeedFPS, defaultSpinRate, 5.0);  // Default 5° min pitch
+        this(maxBallSpeedFPS, defaultSpinRate, 45.0);  // Default 45° min pitch
     }
     
     public TurretTrajectoryTester(double maxBallSpeedFPS, double defaultSpinRate, double minPitchAngleDeg) {

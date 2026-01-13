@@ -52,7 +52,7 @@ public class ShooterAimingController {
     // Mechanical limits (radians)
     private double minTurretYawRad = -Math.PI;
     private double maxTurretYawRad = Math.PI;
-    private double minHoodPitchRad = Math.toRadians(10.0);
+    private double minHoodPitchRad = Math.toRadians(45.0);  // 45° minimum based on analysis
     private double maxHoodPitchRad = Math.toRadians(70.0);
     
     // Resolution for searching (degrees)
