@@ -31,13 +31,14 @@ public class TurretTrajectoryTester {
     
     // Optimized search for 100% success rate with FAST computation (<500ms target)
     // Strategy: Aggressive early exit with hard limits, balanced for close range
-    private static final double GEOMETRIC_SEARCH_RANGE_DEG = 16.0; // Narrower search
-    private static final double GEOMETRIC_SEARCH_STEP_DEG = 4.0;   // Coarser for speed
-    private static final int FAST_SPEED_STEPS = 7;                 // Minimal steps
-    private static final double EARLY_EXIT_THRESHOLD = 0.75;       // Very aggressive exit
-    private static final int MAX_CANDIDATES_TO_FIND = 2;           // Exit after 2 good candidates
-    private static final double REFINEMENT_EXIT_THRESHOLD = 0.80;  // Skip refinement early
-    private static final int MAX_ITERATIONS_BEFORE_EXIT = 400;     // Hard limit (increased for close range)
+    private static final double GEOMETRIC_SEARCH_RANGE_DEG = 10.0; // Narrower search
+    private static final double GEOMETRIC_SEARCH_STEP_DEG = 5.0;   // Coarser for speed
+    private static final int FAST_SPEED_STEPS = 4;                 // Fewer steps
+    private static final double EARLY_EXIT_THRESHOLD = 0.70;       // More aggressive exit
+    private static final int MAX_CANDIDATES_TO_FIND = 1;           // Exit after 1 good candidate
+    private static final double REFINEMENT_EXIT_THRESHOLD = 0.78;  // Skip refinement earlier
+    private static final int MAX_ITERATIONS_BEFORE_EXIT = 120;     // Lower hard limit
+    private static final int MAX_CANDIDATES_BEFORE_EXIT = 2;      // Exit after 2 candidates in fast search
     
     /**
      * Configuration for a test scenario.
