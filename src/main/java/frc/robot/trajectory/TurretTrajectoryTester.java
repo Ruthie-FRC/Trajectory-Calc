@@ -40,6 +40,20 @@ public class TurretTrajectoryTester {
     private static final int MAX_ITERATIONS_BEFORE_EXIT = 120;     // Lower hard limit
     private static final int MAX_CANDIDATES_BEFORE_EXIT = 2;      // Exit after 2 candidates in fast search
     
+    // --- SEARCH PARAMETERS ---
+    // Coarse grid: broad, but not too dense
+    private static final double COARSE_PITCH_STEP = 3.0;
+    private static final double COARSE_YAW_STEP = 3.0;
+    private static final int COARSE_SPEED_STEPS = 6;
+
+    // Fine grid: dense, but small region
+    private static final double FINE_PITCH_STEP = 0.5;
+    private static final double FINE_YAW_STEP = 0.5;
+    private static final int FINE_SPEED_STEPS = 2;
+
+    private static final int MAX_TOTAL_ITERATIONS = 200; // hard cap
+    private static final double EARLY_EXIT_SCORE = 0.93; // only exit if truly excellent
+    
     /**
      * Configuration for a test scenario.
      */
@@ -213,26 +227,32 @@ public class TurretTrajectoryTester {
         }
         minSpeed = Math.min(minSpeed, maxSpeed);
         
-        // --- FAST COARSE SEARCH ---
-        // Use a much coarser grid for initial search
-        double coarsePitchStep = 5.0; // coarse, but covers full range
-        double coarseYawStep = (distanceToTarget < 1.8) ? 4.0 : 6.0;
-        int coarseSpeedSteps = (distanceToTarget < 1.6) ? 6 : 4;
+        // --- COARSE GRID SEARCH ---
+        double bestScore = -Double.MAX_VALUE;
+        TrajectorySimulator.TrajectoryResult bestResult = null;
+        double bestSpeed = 0, bestYaw = targetYaw, bestPitch = geometricPitch;
+        int coarseSpeedSteps = COARSE_SPEED_STEPS;
+        double coarsePitchMin = Math.max(10.0, geometricPitch - 18.0);
+        double coarsePitchMax = Math.min(89.0, geometricPitch + 18.0);
 
-        double bestCoarseScore = -Double.MAX_VALUE;
-        TrajectorySimulator.TrajectoryResult bestCoarseResult = null;
-        double bestCoarseSpeed = 0, bestCoarseYaw = targetYaw, bestCoarsePitch = geometricPitch;
+        int coarsePitchSteps = (int)Math.ceil((coarsePitchMax - coarsePitchMin) / COARSE_PITCH_STEP);
+        int coarseYawSteps = (int)Math.ceil(12.0 / COARSE_YAW_STEP); // ±6° around target
 
+        int iterations = 0;
+        outer:
         for (int s = 0; s <= coarseSpeedSteps; s++) {
             double testSpeed = minSpeed + s * (maxSpeed - minSpeed) / coarseSpeedSteps;
             if (testSpeed > maxSpeed) continue;
-            for (double testPitch = Math.max(45.0, geometricPitch - 10.0); testPitch <= Math.min(90.0, geometricPitch + 10.0); testPitch += coarsePitchStep) {
-                for (double yawOffset = -coarseYawStep; yawOffset <= coarseYawStep; yawOffset += coarseYawStep) {
-                    double testYaw = targetYaw + yawOffset;
+            for (int p = 0; p <= coarsePitchSteps; p++) {
+                double testPitch = coarsePitchMin + p * (coarsePitchMax - coarsePitchMin) / coarsePitchSteps;
+                if (testPitch < 10.0 || testPitch > 89.0) continue;
+                for (int y = -coarseYawSteps; y <= coarseYawSteps; y++) {
+                    double testYaw = targetYaw + y * COARSE_YAW_STEP;
+                    iterations++;
+                    if (iterations > MAX_TOTAL_ITERATIONS && bestResult != null && bestResult.hitTarget) break outer;
                     TrajectorySimulator.TrajectoryResult result = trajSimulator.simulateWithShooterModel(
                         config.robotPosition, testSpeed, testYaw, testPitch, spin);
                     if (result.hitTarget) {
-                        // Score as before
                         double accuracyComponent = result.entryScore * 0.45;
                         double flightTime = result.trajectory.get(result.trajectory.size() - 1).time;
                         double flightTimeScore = Math.max(0, 1.0 - (flightTime / 2.5));
@@ -244,35 +264,33 @@ public class TurretTrajectoryTester {
                         double speedRatio = (testSpeed - minSpeed) / (maxSpeed - minSpeed);
                         double speedComponent = (1.0 - speedRatio) * 0.10;
                         double score = accuracyComponent + flightTimeComponent + movementComponent + speedComponent;
-                        if (score > bestCoarseScore) {
-                            bestCoarseScore = score;
-                            bestCoarseResult = result;
-                            bestCoarseSpeed = testSpeed;
-                            bestCoarseYaw = testYaw;
-                            bestCoarsePitch = testPitch;
-                            if (score > 0.85) break; // early exit if excellent
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestResult = result;
+                            bestSpeed = testSpeed;
+                            bestYaw = testYaw;
+                            bestPitch = testPitch;
+                            if (score > EARLY_EXIT_SCORE) break outer;
                         }
                     }
                 }
             }
         }
 
-        // --- FINE LOCAL SEARCH ---
-        TrajectorySimulator.TrajectoryResult bestResult = bestCoarseResult;
-        double bestSpeed = bestCoarseSpeed, bestYaw = bestCoarseYaw, bestPitch = bestCoarsePitch;
-        double bestScore = bestCoarseScore;
-
-        if (bestCoarseResult != null && bestCoarseScore > 0.5) {
-            // Search in a small neighborhood around the best coarse candidate
-            double finePitchStep = 1.0;
-            double fineYawStep = 1.0;
-            int fineSpeedSteps = 3;
-            for (int s = -1; s <= 1; s++) {
-                double testSpeed = bestCoarseSpeed + s * (maxSpeed - minSpeed) / (coarseSpeedSteps * fineSpeedSteps);
+        // --- FINE LOCAL REFINEMENT ---
+        if (bestResult != null && bestResult.hitTarget) {
+            double finePitchMin = Math.max(10.0, bestPitch - 2.0);
+            double finePitchMax = Math.min(89.0, bestPitch + 2.0);
+            int finePitchSteps = (int)Math.ceil((finePitchMax - finePitchMin) / FINE_PITCH_STEP);
+            int fineYawSteps = (int)Math.ceil(2.0 / FINE_YAW_STEP); // ±1° around best
+            for (int s = -FINE_SPEED_STEPS; s <= FINE_SPEED_STEPS; s++) {
+                double testSpeed = bestSpeed + s * (maxSpeed - minSpeed) / (coarseSpeedSteps * 2.0);
                 if (testSpeed < minSpeed || testSpeed > maxSpeed) continue;
-                for (double testPitch = bestCoarsePitch - 2.0; testPitch <= bestCoarsePitch + 2.0; testPitch += finePitchStep) {
-                    if (testPitch < 45.0 || testPitch > 90.0) continue;
-                    for (double testYaw = bestCoarseYaw - 2.0; testYaw <= bestCoarseYaw + 2.0; testYaw += fineYawStep) {
+                for (int p = 0; p <= finePitchSteps; p++) {
+                    double testPitch = finePitchMin + p * (finePitchMax - finePitchMin) / finePitchSteps;
+                    if (testPitch < 10.0 || testPitch > 89.0) continue;
+                    for (int y = -fineYawSteps; y <= fineYawSteps; y++) {
+                        double testYaw = bestYaw + y * FINE_YAW_STEP;
                         TrajectorySimulator.TrajectoryResult result = trajSimulator.simulateWithShooterModel(
                             config.robotPosition, testSpeed, testYaw, testPitch, spin);
                         if (result.hitTarget) {
@@ -293,7 +311,6 @@ public class TurretTrajectoryTester {
                                 bestSpeed = testSpeed;
                                 bestYaw = testYaw;
                                 bestPitch = testPitch;
-                                if (score > 0.92) break; // early exit if excellent
                             }
                         }
                     }
