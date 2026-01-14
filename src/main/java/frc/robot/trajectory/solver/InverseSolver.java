@@ -1,15 +1,10 @@
 package frc.robot.trajectory.solver;
 
-import java.util.HashMap;
-import java.util.Map;
 import frc.robot.trajectory.physics.HubGeometry;
 import frc.robot.trajectory.physics.PhysicsConstants;
 import frc.robot.trajectory.physics.ProjectileState;
 import frc.robot.trajectory.simulation.TrajectorySimulator;
 import frc.robot.trajectory.util.Vector3D;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Inverse ballistic solver using iterative shooting method.
@@ -22,11 +17,6 @@ public class InverseSolver {
     private final int maxIterations;
     private final double convergenceTolerance;
     
-    // Pre-seeded guess system
-    private final Map<String, SolutionResult> successfulShotCache;
-    private boolean usePreSeededGuesses;
-    private SolutionResult lastSuccessfulSolution;
-    
     public InverseSolver(TrajectorySimulator simulator) {
         this(simulator, 50, PhysicsConstants.CONVERGENCE_TOLERANCE);
     }
@@ -36,39 +26,6 @@ public class InverseSolver {
         this.hubGeometry = simulator.getHubGeometry();
         this.maxIterations = maxIterations;
         this.convergenceTolerance = convergenceTolerance;
-        this.successfulShotCache = new HashMap<>();
-        this.usePreSeededGuesses = true; // Enabled by default
-        this.lastSuccessfulSolution = null;
-    }
-    
-    /**
-     * Enable or disable pre-seeded guesses from previous successful shots.
-     */
-    public void setUsePreSeededGuesses(boolean enabled) {
-        this.usePreSeededGuesses = enabled;
-    }
-    
-    public boolean isUsingPreSeededGuesses() {
-        return usePreSeededGuesses;
-    }
-    
-    /**
-     * Clear the cache of successful shots.
-     */
-    public void clearShotCache() {
-        successfulShotCache.clear();
-        lastSuccessfulSolution = null;
-    }
-    
-    /**
-     * Get cache key for position-based lookup.
-     */
-    private String getCacheKey(Vector3D robotPosition, double speed) {
-        // Round to 0.5m grid for cache lookup
-        int gridX = (int) Math.round(robotPosition.x * 2.0);
-        int gridY = (int) Math.round(robotPosition.y * 2.0);
-        int gridSpeed = (int) Math.round(speed);
-        return gridX + "," + gridY + "," + gridSpeed;
     }
     
     /**
@@ -83,159 +40,50 @@ public class InverseSolver {
      */
     public SolutionResult solve(Vector3D robotPosition, double nominalLaunchSpeed, Vector3D spin) {
         Vector3D targetCenter = hubGeometry.getCenter();
-        
+
         // Clamp spin rate to safety limits
         double spinMagnitude = spin.magnitude();
         if (spinMagnitude > PhysicsConstants.MAX_SPIN_RATE) {
             spin = spin.scale(PhysicsConstants.MAX_SPIN_RATE / spinMagnitude);
             spinMagnitude = PhysicsConstants.MAX_SPIN_RATE;
         }
-        
-        // Try to get pre-seeded guess from cache or last successful shot
-        double yawDeg, pitchDeg;
-        
-        if (usePreSeededGuesses) {
-            String cacheKey = getCacheKey(robotPosition, nominalLaunchSpeed);
-            SolutionResult cachedSolution = successfulShotCache.get(cacheKey);
-            
-            if (cachedSolution != null && cachedSolution.isHit()) {
-                // Use cached solution as initial guess
-                yawDeg = cachedSolution.launchYawDeg;
-                pitchDeg = cachedSolution.launchPitchDeg;
-            } else if (lastSuccessfulSolution != null && lastSuccessfulSolution.isHit()) {
-                // Use last successful solution as fallback
-                yawDeg = lastSuccessfulSolution.launchYawDeg;
-                pitchDeg = lastSuccessfulSolution.launchPitchDeg;
-            } else {
-                // Fall back to geometric estimate
-                double dx = targetCenter.x - robotPosition.x;
-                double dy = targetCenter.y - robotPosition.y;
-                double dz = targetCenter.z - robotPosition.z;
-                double horizontalDist = Math.sqrt(dx * dx + dy * dy);
-                yawDeg = Math.toDegrees(Math.atan2(dy, dx));
-                pitchDeg = Math.toDegrees(Math.atan2(dz, horizontalDist)) + 5.0;
-            }
-        } else {
-            // Use geometric estimate
-            double dx = targetCenter.x - robotPosition.x;
-            double dy = targetCenter.y - robotPosition.y;
-            double dz = targetCenter.z - robotPosition.z;
-            double horizontalDist = Math.sqrt(dx * dx + dy * dy);
-            yawDeg = Math.toDegrees(Math.atan2(dy, dx));
-            pitchDeg = Math.toDegrees(Math.atan2(dz, horizontalDist)) + 5.0;
-        }
-        
-        // Iterative refinement using gradient descent / shooting method
+
+        // Geometric estimate
+        double dx = targetCenter.x - robotPosition.x;
+        double dy = targetCenter.y - robotPosition.y;
+        double dz = targetCenter.z - robotPosition.z;
+        double horizontalDist = Math.sqrt(dx * dx + dy * dy);
+        double yawDeg = Math.toDegrees(Math.atan2(dy, dx));
+        double pitchDeg = Math.toDegrees(Math.atan2(dz, horizontalDist)) + 5.0;
+
+        // Minimal grid: geometric seed and ±2°/±2° neighbors
+        double[] yawOffsets = {0.0, -2.0, 2.0};
+        double[] pitchOffsets = {0.0, -2.0, 2.0};
+
         double bestYaw = yawDeg;
         double bestPitch = pitchDeg;
         double bestScore = -1.0;
         TrajectorySimulator.TrajectoryResult bestResult = null;
-        
-        // Grid search around initial guess - WIDER search for FRC shots
-        // Increased from 2.0°/1.0° to 5.0°/3.0° to handle trajectory variations
-        // from simple ballistic estimates due to drag and Magnus effects
-        double yawStep = 5.0; // degrees - wider for large arenas
-        double pitchStep = 3.0; // degrees - wider to find viable arcs
-        
-        for (int iter = 0; iter < 3; iter++) {
-            double currentBestScore = bestScore;
-            
-            // Expanded from ±2 steps to ±3 steps (25 → 49 grid points per iteration)
-            // Early exit if good solution found to mitigate performance impact
-            for (double yawOffset = -yawStep * 3; yawOffset <= yawStep * 3; yawOffset += yawStep) {
-                for (double pitchOffset = -pitchStep * 3; pitchOffset <= pitchStep * 3; pitchOffset += pitchStep) {
-                    double tryYaw = bestYaw + yawOffset;
-                    double tryPitch = bestPitch + pitchOffset;
-                    
-                    // Constrain pitch to 45-90° range
-                    if (tryPitch < 45.0 || tryPitch > 90.0) continue;
-                    
-                    // Simulate trajectory
-                    TrajectorySimulator.TrajectoryResult result = simulator.simulateWithShooterModel(
-                        robotPosition, nominalLaunchSpeed, tryYaw, tryPitch, spin
-                    );
-                    
-                    // Evaluate result
-                    double score = evaluateSolution(result, targetCenter);
-                    
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestYaw = tryYaw;
-                        bestPitch = tryPitch;
-                        bestResult = result;
-                        
-                        // Early exit if we found a very good solution (score > 0.5)
-                        if (result.hitTarget && score > 0.5) {
-                            break;
-                        }
-                    }
-                }
-                
-                // Break outer loop too if early exit triggered
-                if (bestResult != null && bestResult.hitTarget && bestScore > 0.5) {
-                    break;
-                }
-            }
-            
-            // Refine search around best solution
-            yawStep *= 0.5;
-            pitchStep *= 0.5;
-            
-            // Check for convergence
-            if (Math.abs(bestScore - currentBestScore) < 0.001) {
-                break;
-            }
-        }
-        
-        // Fine-tuning phase with smaller steps
-        yawStep = 0.2;
-        pitchStep = 0.1;
-        
-        for (int iter = 0; iter < maxIterations; iter++) {
-            boolean improved = false;
-            
-            // Try small adjustments
-            double[][] deltas = {{yawStep, 0}, {-yawStep, 0}, {0, pitchStep}, {0, -pitchStep}};
-            
-            for (double[] delta : deltas) {
-                double tryYaw = bestYaw + delta[0];
-                double tryPitch = bestPitch + delta[1];
-                
+
+        for (double yawOffset : yawOffsets) {
+            for (double pitchOffset : pitchOffsets) {
+                double tryYaw = yawDeg + yawOffset;
+                double tryPitch = pitchDeg + pitchOffset;
+                if (tryPitch < 45.0 || tryPitch > 90.0) continue;
                 TrajectorySimulator.TrajectoryResult result = simulator.simulateWithShooterModel(
                     robotPosition, nominalLaunchSpeed, tryYaw, tryPitch, spin
                 );
-                
                 double score = evaluateSolution(result, targetCenter);
-                
-                if (score > bestScore) {
+                if (result.hitTarget && score > bestScore) {
                     bestScore = score;
                     bestYaw = tryYaw;
                     bestPitch = tryPitch;
                     bestResult = result;
-                    improved = true;
-                }
-            }
-            
-            if (!improved) {
-                // Reduce step size and continue
-                yawStep *= 0.5;
-                pitchStep *= 0.5;
-                
-                if (yawStep < 0.01 && pitchStep < 0.01) {
-                    break; // Converged
                 }
             }
         }
-        
+
         SolutionResult solution = new SolutionResult(bestYaw, bestPitch, bestScore, bestResult);
-        
-        // Cache successful solution for future use
-        if (solution.isHit() && usePreSeededGuesses) {
-            String cacheKey = getCacheKey(robotPosition, nominalLaunchSpeed);
-            successfulShotCache.put(cacheKey, solution);
-            lastSuccessfulSolution = solution;
-        }
-        
         return solution;
     }
     

@@ -111,6 +111,7 @@ public class RK4Integrator {
     
     /**
      * Apply a derivative to a state for a given time step.
+     * Deterministic: no randomness or adaptive logic.
      */
     protected ProjectileState applyDerivative(ProjectileState state, StateDerivative derivative, double dt) {
         Vector3D newPosition = state.position.add(derivative.positionDerivative.scale(dt));

@@ -551,4 +551,6 @@ public class ShooterAimingController {
             this.timestamp = timestamp;
         }
     }
+    // If you want deterministic confidence, disable perturbation testing:
+    // enablePerturbationTesting = false;
 }
