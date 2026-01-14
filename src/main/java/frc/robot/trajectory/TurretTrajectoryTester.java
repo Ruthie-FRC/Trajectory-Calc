@@ -212,221 +212,94 @@ public class TurretTrajectoryTester {
         }
         minSpeed = Math.min(minSpeed, maxSpeed);
         
-        TrajectorySimulator.TrajectoryResult bestResult = null;
-        double bestSpeed = 0;
-        double bestYaw = targetYaw;
-        double bestPitch = geometricPitch;
-        double bestScore = -Double.MAX_VALUE;
-        
-        // Optimized comprehensive search for 100% success rate
-        // Smart exhaustive search - focus on relevant parameter ranges
-        
-        // ULTRA-FAST CANDIDATE IDENTIFICATION (<0.1s total)
-        // Strategy: Quickly identify only practical angles, test minimal combinations
-        // Then pick the best of the few candidates found
-        
-        java.util.Set<Double> pitchAngleSet = new java.util.HashSet<>();
-        
-        // Smart sampling around geometric estimate (fewer angles)
-        for (double offset = -GEOMETRIC_SEARCH_RANGE_DEG; offset <= GEOMETRIC_SEARCH_RANGE_DEG; offset += GEOMETRIC_SEARCH_STEP_DEG) {
-            double angle = geometricPitch + offset;
-            // Constrain to 45-90° range for hood
-            if (angle >= 45.0 && angle <= 90.0) {
-                pitchAngleSet.add(angle);
-            }
-        }
-        
-        // Add practical angles in 45-90° range
-        for (double angle = 45.0; angle <= 90.0; angle += 2.0) {
-            pitchAngleSet.add(angle);
-        }
-        
-        // Convert to sorted array
-        Double[] pitchAngles = pitchAngleSet.toArray(new Double[0]);
-        java.util.Arrays.sort(pitchAngles);
-        
-        // Pitch configuration - use 45-90° range
-        int speedSteps;
-        if (distanceToTarget < 1.6) {
-            // Critical close range: need more steps for 100% accuracy
-            speedSteps = 14;
-        } else if (distanceToTarget < 2.5) {
-            // Medium close: moderate steps
-            speedSteps = 9;
-        } else {
-            // Normal: minimal steps
-            speedSteps = FAST_SPEED_STEPS;
-        }
-        double speedStep = (maxSpeed - minSpeed) / speedSteps;
-        
-        // Yaw offsets - balanced: more for close, fewer for far
-        double[] yawOffsets;
-        if (distanceToTarget < 1.8) {
-            yawOffsets = new double[]{0.0, -2.0, 2.0, -5.0, 5.0, -8.0, 8.0};
-        } else {
-            yawOffsets = new double[]{0.0, -3.0, 3.0, -6.0, 6.0};
-        }
-        
-        // Comprehensive candidate search with hard iteration limit
-        // Target: <500ms per scenario
-        int candidatesFound = 0;
-        int iterationCount = 0;
-        for (int s = 0; s <= speedSteps; s++) {
-            double testSpeed = minSpeed + s * speedStep;
+        // --- FAST COARSE SEARCH ---
+        // Use a much coarser grid for initial search
+        double coarsePitchStep = 5.0; // coarse, but covers full range
+        double coarseYawStep = (distanceToTarget < 1.8) ? 4.0 : 6.0;
+        int coarseSpeedSteps = (distanceToTarget < 1.6) ? 6 : 4;
+
+        double bestCoarseScore = -Double.MAX_VALUE;
+        TrajectorySimulator.TrajectoryResult bestCoarseResult = null;
+        double bestCoarseSpeed = 0, bestCoarseYaw = targetYaw, bestCoarsePitch = geometricPitch;
+
+        for (int s = 0; s <= coarseSpeedSteps; s++) {
+            double testSpeed = minSpeed + s * (maxSpeed - minSpeed) / coarseSpeedSteps;
             if (testSpeed > maxSpeed) continue;
-            
-            for (double testPitch : pitchAngles) {
-                // Constrain to 45-90° range
-                if (testPitch < 45.0 || testPitch > 90.0) continue;
-                
-                for (double yawOffset : yawOffsets) {
+            for (double testPitch = Math.max(45.0, geometricPitch - 10.0); testPitch <= Math.min(90.0, geometricPitch + 10.0); testPitch += coarsePitchStep) {
+                for (double yawOffset = -coarseYawStep; yawOffset <= coarseYawStep; yawOffset += coarseYawStep) {
                     double testYaw = targetYaw + yawOffset;
-                    
-                    // Hard limit check - prevent runaway scenarios
-                    iterationCount++;
-                    if (iterationCount > MAX_ITERATIONS_BEFORE_EXIT && bestResult != null && bestResult.hitTarget) {
-                        break; // Exit if we have a solution and hit iteration limit
-                    }
-                    
-                    // Simulate this trajectory
                     TrajectorySimulator.TrajectoryResult result = trajSimulator.simulateWithShooterModel(
                         config.robotPosition, testSpeed, testYaw, testPitch, spin);
-                    
                     if (result.hitTarget) {
-                        candidatesFound++;
-                        
-                        // Scoring based on user-specified priority order:
-                        // 1. Accuracy (45%) - Entry quality, rim clearance, center-targeting
-                        // 2. Ball flight time (25%) - Minimize time to target
-                        // 3. Minimum turret movement (20%) - Prefer solutions near current position
-                        // 4. Ball speed/RPM (10%) - Use minimum viable speed
-                        
-                        // Priority 1: ACCURACY (45% total weight)
-                        // Entry score already accounts for center-targeting and rim clearance
+                        // Score as before
                         double accuracyComponent = result.entryScore * 0.45;
-                        
-                        // Priority 2: BALL FLIGHT TIME (25% weight)
-                        // Shorter flight time = faster to target = higher score
                         double flightTime = result.trajectory.get(result.trajectory.size() - 1).time;
-                        double maxReasonableTime = 2.5;  // 2.5 seconds max expected
-                        double flightTimeScore = Math.max(0, 1.0 - (flightTime / maxReasonableTime));
+                        double flightTimeScore = Math.max(0, 1.0 - (flightTime / 2.5));
                         double flightTimeComponent = flightTimeScore * 0.25;
-                        
-                        // Priority 3: MINIMUM TURRET MOVEMENT (20% weight)
-                        // Calculate angular distance from current turret position
                         double yawDelta = Math.abs(testYaw - config.turretYawOffset);
                         double pitchDelta = Math.abs(testPitch - config.turretPitchOffset);
-                        // Normalize to typical ranges (±180° yaw, ±90° pitch)
-                        double normalizedYawDelta = yawDelta / 180.0;
-                        double normalizedPitchDelta = pitchDelta / 90.0;
-                        // Combined angular distance (weighted equally)
-                        double angularDistance = (normalizedYawDelta + normalizedPitchDelta) / 2.0;
-                        double movementScore = Math.max(0, 1.0 - angularDistance);
+                        double movementScore = Math.max(0, 1.0 - ((yawDelta / 180.0 + pitchDelta / 90.0) / 2.0));
                         double movementComponent = movementScore * 0.20;
-                        
-                        // Priority 4: BALL SPEED/RPM (10% weight - lowest priority)
-                        // Prefer minimum viable speed
                         double speedRatio = (testSpeed - minSpeed) / (maxSpeed - minSpeed);
-                        double speedScore = 1.0 - speedRatio;  // Lower speed = higher score
-                        double speedComponent = speedScore * 0.10;
-                        
-                        // Combined score following user priority order
+                        double speedComponent = (1.0 - speedRatio) * 0.10;
                         double score = accuracyComponent + flightTimeComponent + movementComponent + speedComponent;
-                        
-                        if (score > bestScore) {
-                            bestScore = score;
-                            bestResult = result;
-                            bestSpeed = testSpeed;
-                            bestYaw = testYaw;
-                            bestPitch = testPitch;
-                            
-                            // Smart early exit: only if we found an excellent solution
-                            // Otherwise keep searching for better options
-                            if (bestScore > EARLY_EXIT_THRESHOLD && candidatesFound >= MAX_CANDIDATES_TO_FIND) {
-                                break;  // Exit yaw loop
-                            }
+                        if (score > bestCoarseScore) {
+                            bestCoarseScore = score;
+                            bestCoarseResult = result;
+                            bestCoarseSpeed = testSpeed;
+                            bestCoarseYaw = testYaw;
+                            bestCoarsePitch = testPitch;
+                            if (score > 0.85) break; // early exit if excellent
                         }
                     }
                 }
-                
-                // Hard limit check for pitch loop
-                if (iterationCount > MAX_ITERATIONS_BEFORE_EXIT && bestResult != null && bestResult.hitTarget) {
-                    break;
-                }
-                
-                // Early exit only if found excellent candidates
-                if (bestScore > EARLY_EXIT_THRESHOLD && candidatesFound >= MAX_CANDIDATES_TO_FIND) {
-                    break;  // Exit pitch loop
-                }
-            }
-            
-            // Hard limit check for speed loop
-            if (iterationCount > MAX_ITERATIONS_BEFORE_EXIT && bestResult != null && bestResult.hitTarget) {
-                break;
-            }
-            
-            // Early exit only if found excellent candidates
-            if (bestScore > EARLY_EXIT_THRESHOLD && candidatesFound >= MAX_CANDIDATES_TO_FIND) {
-                break;  // Exit speed loop
             }
         }
-        
-        // Phase 2: Refinement - simplified for speed
-        // Only refine if we have a marginal solution
-        if (bestResult != null && bestResult.hitTarget && bestScore < REFINEMENT_EXIT_THRESHOLD && bestScore > 0.65) {
-            // Minimal refinement with coarse steps for speed
-            double fineSpeedStep = Math.max(0.5, (maxSpeed - minSpeed) / 10.0);
-            double[] finePitchOffsets = {0, -2.0, 2.0};  // ±2° only
-            double[] fineYawOffsets = {0, -2.0, 2.0};    // ±2° only
-            
-            for (double speedOffset = -fineSpeedStep; speedOffset <= fineSpeedStep; speedOffset += fineSpeedStep) {
-                double testSpeed = bestSpeed + speedOffset;
+
+        // --- FINE LOCAL SEARCH ---
+        TrajectorySimulator.TrajectoryResult bestResult = bestCoarseResult;
+        double bestSpeed = bestCoarseSpeed, bestYaw = bestCoarseYaw, bestPitch = bestCoarsePitch;
+        double bestScore = bestCoarseScore;
+
+        if (bestCoarseResult != null && bestCoarseScore > 0.5) {
+            // Search in a small neighborhood around the best coarse candidate
+            double finePitchStep = 1.0;
+            double fineYawStep = 1.0;
+            int fineSpeedSteps = 3;
+            for (int s = -1; s <= 1; s++) {
+                double testSpeed = bestCoarseSpeed + s * (maxSpeed - minSpeed) / (coarseSpeedSteps * fineSpeedSteps);
                 if (testSpeed < minSpeed || testSpeed > maxSpeed) continue;
-                
-                for (double pitchOffset : finePitchOffsets) {
-                    double testPitch = bestPitch + pitchOffset;
+                for (double testPitch = bestCoarsePitch - 2.0; testPitch <= bestCoarsePitch + 2.0; testPitch += finePitchStep) {
                     if (testPitch < 45.0 || testPitch > 90.0) continue;
-                    
-                    for (double yawOffset : fineYawOffsets) {
-                        double testYaw = bestYaw + yawOffset;
-                        
+                    for (double testYaw = bestCoarseYaw - 2.0; testYaw <= bestCoarseYaw + 2.0; testYaw += fineYawStep) {
                         TrajectorySimulator.TrajectoryResult result = trajSimulator.simulateWithShooterModel(
                             config.robotPosition, testSpeed, testYaw, testPitch, spin);
-                        
                         if (result.hitTarget) {
-                            // Recalculate score with same priority order
                             double accuracyComponent = result.entryScore * 0.45;
                             double flightTime = result.trajectory.get(result.trajectory.size() - 1).time;
                             double flightTimeScore = Math.max(0, 1.0 - (flightTime / 2.5));
                             double flightTimeComponent = flightTimeScore * 0.25;
                             double yawDelta = Math.abs(testYaw - config.turretYawOffset);
                             double pitchDelta = Math.abs(testPitch - config.turretPitchOffset);
-                            double angularDistance = ((yawDelta / 180.0) + (pitchDelta / 90.0)) / 2.0;
-                            double movementComponent = Math.max(0, 1.0 - angularDistance) * 0.20;
+                            double movementScore = Math.max(0, 1.0 - ((yawDelta / 180.0 + pitchDelta / 90.0) / 2.0));
+                            double movementComponent = movementScore * 0.20;
                             double speedRatio = (testSpeed - minSpeed) / (maxSpeed - minSpeed);
                             double speedComponent = (1.0 - speedRatio) * 0.10;
                             double score = accuracyComponent + flightTimeComponent + movementComponent + speedComponent;
-                            
                             if (score > bestScore) {
                                 bestScore = score;
                                 bestResult = result;
                                 bestSpeed = testSpeed;
                                 bestYaw = testYaw;
                                 bestPitch = testPitch;
-                                
-                                // Early exit if excellent
-                                if (bestScore > REFINEMENT_EXIT_THRESHOLD) {
-                                    break;
-                                }
+                                if (score > 0.92) break; // early exit if excellent
                             }
                         }
                     }
-                    if (bestScore > REFINEMENT_EXIT_THRESHOLD) break;
                 }
-                if (bestScore > REFINEMENT_EXIT_THRESHOLD) break;
             }
         }
-        
+
         // If we didn't find a hit, return no solution
         if (bestResult == null || !bestResult.hitTarget) {
             output.hasShot = false;
@@ -435,41 +308,26 @@ public class TurretTrajectoryTester {
         
         // We found a trajectory that hits! Now extract the parameters
         output.hasShot = true;
-        
-        // Calculate adjustments needed from current turret orientation
         output.requiredYawAdjust = bestYaw - config.turretYawOffset;
         output.requiredPitchAdjust = bestPitch - config.turretPitchOffset;
         output.finalYaw = bestYaw;
         output.finalPitch = bestPitch;
-        
-        // Speed is already in m/s, no conversion needed
         output.shooterSpeed = bestSpeed;
-        
         output.spinRate = config.spinRate;
         output.spinAxis = spin.normalize();
-        
-        // Calculate success probability from entry score
-        output.riskScore = 1.0 - bestScore; // Lower score = lower risk
-        output.successProbability = bestScore; // Score directly represents quality
-        
-        // Calculate confidence based on trajectory quality
-        double angleQuality = 1.0 - Math.abs(bestPitch - 45.0) / 45.0; // Prefer 45° launches
+        output.riskScore = 1.0 - bestScore;
+        output.successProbability = bestScore;
+        double angleQuality = 1.0 - Math.abs(bestPitch - 45.0) / 45.0;
         double scoreQuality = bestScore;
         output.confidence = (angleQuality * 0.3 + scoreQuality * 0.7);
         output.confidence = Math.max(0.0, Math.min(1.0, output.confidence));
-        
-        // Calculate margin of error based on trajectory characteristics
         double distanceToTargetForError = Math.sqrt(dx * dx + dy * dy + dz * dz);
         double dragErrorFactor = 0.02;
         double spinErrorFactor = 0.05;
         output.marginOfError = distanceToTargetForError * (dragErrorFactor + spinErrorFactor * (config.spinRate / 300.0));
-        
-        // Generate full trajectory equation
         output.trajectoryEquation = generateTrajectoryEquation(
             config.robotPosition, new Vector3D(dx, dy, dz), bestSpeed, spin, 
             new InverseSolver.SolutionResult(bestYaw, bestPitch, bestScore, bestResult));
-        
-        // Extract trajectory details
         if (bestResult.entryState != null) {
             double vz = bestResult.entryState.velocity.z;
             double speedAtEntry = bestResult.entryState.velocity.magnitude();
@@ -477,11 +335,8 @@ public class TurretTrajectoryTester {
                 output.entryAngle = Math.abs(Math.toDegrees(Math.asin(-vz / speedAtEntry)));
             }
         }
-        
         output.flightTime = bestResult.getFlightTime();
         output.apexHeight = bestResult.getMaxHeight();
-        
-        // Generate trajectory description
         double distance = Math.sqrt(dx * dx + dy * dy);
         if (distance < 3.5) {
             output.trajectory = "Close-range, high-arc shot";
@@ -490,11 +345,9 @@ public class TurretTrajectoryTester {
         } else {
             output.trajectory = "Long-range shot";
         }
-        
         if (Math.abs(dy) > 1.0) {
             output.trajectory += ", significant lateral component";
         }
-        
         return output;
     }
     
