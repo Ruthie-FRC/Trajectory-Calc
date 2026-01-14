@@ -230,43 +230,22 @@ public class TurretTrajectoryTester {
         // Smart sampling around geometric estimate (fewer angles)
         for (double offset = -GEOMETRIC_SEARCH_RANGE_DEG; offset <= GEOMETRIC_SEARCH_RANGE_DEG; offset += GEOMETRIC_SEARCH_STEP_DEG) {
             double angle = geometricPitch + offset;
-            // Allow up to 89° for ultra-close shots
-            double maxAngle = (distanceToTarget < 1.0) ? 89.0 : 85.0;
-            if (angle >= 5.0 && angle <= maxAngle) {
+            // Constrain to 45-90° range for hood
+            if (angle >= 45.0 && angle <= 90.0) {
                 pitchAngleSet.add(angle);
             }
         }
         
-        // Add more practical angles based on distance for better coverage
-        // Optimized for 4.877m (16 feet) max range - balanced for 100% accuracy with speed
-        // Now >1.0m minimum, adjusted thresholds based on failure analysis
-        if (distanceToTarget < 1.6) {
-            // Critical close (1.0-1.6m): need finer coverage for 100% accuracy
-            for (double angle = 60.0; angle <= 87.0; angle += 1.5) {
-                pitchAngleSet.add(angle);
-            }
-        } else if (distanceToTarget < 2.5) {
-            // Medium (1.6-8 feet): mid-range coverage
-            for (double angle = 30.0; angle <= 70.0; angle += 3.5) {
-                pitchAngleSet.add(angle);
-            }
-        } else if (distanceToTarget < 3.66) {
-            // Long (8-12 feet): optimal trajectory coverage
-            for (double angle = 20.0; angle <= 65.0; angle += 4.5) {
-                pitchAngleSet.add(angle);
-            }
-        } else {
-            // Very long (12-16 feet): extended range coverage
-            for (double angle = 15.0; angle <= 60.0; angle += 5.0) {
-                pitchAngleSet.add(angle);
-            }
+        // Add practical angles in 45-90° range
+        for (double angle = 45.0; angle <= 90.0; angle += 2.0) {
+            pitchAngleSet.add(angle);
         }
         
         // Convert to sorted array
         Double[] pitchAngles = pitchAngleSet.toArray(new Double[0]);
         java.util.Arrays.sort(pitchAngles);
         
-        // Speed configuration - balanced for 100% accuracy and speed
+        // Pitch configuration - use 45-90° range
         int speedSteps;
         if (distanceToTarget < 1.6) {
             // Critical close range: need more steps for 100% accuracy
@@ -297,9 +276,8 @@ public class TurretTrajectoryTester {
             if (testSpeed > maxSpeed) continue;
             
             for (double testPitch : pitchAngles) {
-                // Allow steeper angles for ultra-close shots
-                double maxAllowedPitch = (distanceToTarget < 1.0) ? 89.0 : 85.0;
-                if (testPitch < 5.0 || testPitch > maxAllowedPitch) continue;
+                // Constrain to 45-90° range
+                if (testPitch < 45.0 || testPitch > 90.0) continue;
                 
                 for (double yawOffset : yawOffsets) {
                     double testYaw = targetYaw + yawOffset;
@@ -407,7 +385,7 @@ public class TurretTrajectoryTester {
                 
                 for (double pitchOffset : finePitchOffsets) {
                     double testPitch = bestPitch + pitchOffset;
-                    if (testPitch < 5.0 || testPitch > 85.0) continue;
+                    if (testPitch < 45.0 || testPitch > 90.0) continue;
                     
                     for (double yawOffset : fineYawOffsets) {
                         double testYaw = bestYaw + yawOffset;

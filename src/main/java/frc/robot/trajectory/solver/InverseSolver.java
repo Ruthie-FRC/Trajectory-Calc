@@ -147,6 +147,9 @@ public class InverseSolver {
                     double tryYaw = bestYaw + yawOffset;
                     double tryPitch = bestPitch + pitchOffset;
                     
+                    // Constrain pitch to 45-90° range
+                    if (tryPitch < 45.0 || tryPitch > 90.0) continue;
+                    
                     // Simulate trajectory
                     TrajectorySimulator.TrajectoryResult result = simulator.simulateWithShooterModel(
                         robotPosition, nominalLaunchSpeed, tryYaw, tryPitch, spin
